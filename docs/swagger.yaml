@@ -1,0 +1,2520 @@
+openapi: 3.0.0
+paths:
+  /api/auth/register:
+    post:
+      operationId: AuthController_register
+      summary: 用户注册
+      description: 创建新用户账户
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDto'
+      responses:
+        '201':
+          description: 注册成功
+        '400':
+          description: 请求参数错误
+      tags: &ref_0
+        - 认证管理
+  /api/auth/login:
+    post:
+      operationId: AuthController_login
+      summary: 用户登录
+      description: 用户登录获取访问令牌
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginDto'
+      responses:
+        '200':
+          description: 登录成功
+        '401':
+          description: 用户名或密码错误
+      tags: *ref_0
+  /api/auth/refresh:
+    post:
+      operationId: AuthController_refresh
+      summary: 刷新令牌
+      description: 使用刷新令牌获取新的访问令牌
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenDto'
+      responses:
+        '200':
+          description: 刷新成功
+        '401':
+          description: 刷新令牌无效
+      tags: *ref_0
+  /api/auth/logout:
+    post:
+      operationId: AuthController_logout
+      summary: 用户登出
+      description: 用户登出并使令牌失效
+      parameters: []
+      responses:
+        '200':
+          description: 登出成功
+      tags: *ref_0
+      security:
+        - JWT-auth: []
+  /api/auth/profile:
+    get:
+      operationId: AuthController_getProfile
+      summary: 获取用户信息
+      description: 获取当前登录用户的详细信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_0
+      security:
+        - JWT-auth: []
+  /api/auth/google:
+    get:
+      operationId: AuthController_googleAuth
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+  /api/auth/google/callback:
+    get:
+      operationId: AuthController_googleAuthCallback
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+  /api/auth/github:
+    get:
+      operationId: AuthController_githubAuth
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+  /api/auth/github/callback:
+    get:
+      operationId: AuthController_githubAuthCallback
+      parameters: []
+      responses:
+        '200':
+          description: ''
+      tags: *ref_0
+  /api/users:
+    post:
+      operationId: UserController_create
+      summary: 创建用户
+      description: 创建新用户账户
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+      responses:
+        '201':
+          description: 创建成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: &ref_1
+        - 用户管理
+      security:
+        - JWT-auth: []
+    get:
+      operationId: UserController_findAll
+      summary: 获取用户列表
+      description: 分页获取用户列表
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 页码
+          schema:
+            example: 1
+            type: string
+        - name: limit
+          required: false
+          in: query
+          description: 每页数量
+          schema:
+            example: 10
+            type: string
+        - name: status
+          required: false
+          in: query
+          description: 用户状态
+          schema:
+            enum:
+              - active
+              - inactive
+              - banned
+            type: string
+        - name: search
+          required: false
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/profile:
+    get:
+      operationId: UserController_getProfile
+      summary: 获取个人信息
+      description: 获取当前登录用户的个人信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+    patch:
+      operationId: UserController_updateProfile
+      summary: 更新个人信息
+      description: 更新当前登录用户的个人信息
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/stats:
+    get:
+      operationId: UserController_getStats
+      summary: 获取用户统计
+      description: 获取用户统计信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/{id}:
+    get:
+      operationId: UserController_findOne
+      summary: 获取用户详情
+      description: 根据ID获取用户详细信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+    patch:
+      operationId: UserController_update
+      summary: 更新用户信息
+      description: 根据ID更新用户信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: UserController_remove
+      summary: 删除用户
+      description: 根据ID删除用户
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/{id}/status:
+    patch:
+      operationId: UserController_changeStatus
+      summary: 修改用户状态
+      description: 修改用户账户状态
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeUserStatusDto'
+      responses:
+        '200':
+          description: 修改成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/{id}/roles:
+    post:
+      operationId: UserController_assignRole
+      summary: 分配角色
+      description: 为用户分配角色
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleDto'
+      responses:
+        '200':
+          description: 分配成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/users/{id}/roles/{roleId}:
+    delete:
+      operationId: UserController_removeRole
+      summary: 移除角色
+      description: 移除用户的角色
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+        - name: roleId
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 移除成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 用户不存在
+      tags: *ref_1
+      security:
+        - JWT-auth: []
+  /api/blogs:
+    post:
+      operationId: BlogController_create
+      summary: 创建博客
+      description: 创建新的博客文章
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBlogDto'
+      responses:
+        '201':
+          description: 创建成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: &ref_2
+        - 博客管理
+      security:
+        - JWT-auth: []
+    get:
+      operationId: BlogController_findAll
+      summary: 获取博客列表
+      description: 获取已发布的博客列表（公开接口）
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_2
+  /api/blogs/admin:
+    get:
+      operationId: BlogController_findAllForAdmin
+      summary: 管理员获取博客列表
+      description: 管理员获取所有状态的博客列表
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+  /api/blogs/my:
+    get:
+      operationId: BlogController_findMyBlogs
+      summary: 获取我的博客
+      description: 获取当前用户的博客列表
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+  /api/blogs/stats:
+    get:
+      operationId: BlogController_getStats
+      summary: 获取博客统计
+      description: 获取博客相关统计信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+  /api/blogs/slug/{slug}:
+    get:
+      operationId: BlogController_findBySlug
+      summary: 通过别名获取博客
+      description: 通过博客别名获取博客详情
+      parameters:
+        - name: slug
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+  /api/blogs/{id}:
+    get:
+      operationId: BlogController_findOne
+      summary: 获取博客详情
+      description: 通过ID获取博客详情并增加浏览量
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+    patch:
+      operationId: BlogController_update
+      summary: 更新博客
+      description: 更新指定博客的信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBlogDto'
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: BlogController_remove
+      summary: 删除博客
+      description: 删除指定的博客
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+  /api/blogs/{id}/like:
+    post:
+      operationId: BlogController_likeBlog
+      summary: 点赞博客
+      description: 为指定博客点赞
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 点赞成功
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+    delete:
+      operationId: BlogController_unlikeBlog
+      summary: 取消点赞
+      description: 取消对指定博客的点赞
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 取消点赞成功
+        '404':
+          description: 博客不存在
+      tags: *ref_2
+  /api/categories:
+    post:
+      operationId: CategoryController_create
+      summary: 创建分类
+      description: 创建新的博客分类
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryDto'
+      responses:
+        '201':
+          description: 创建成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: &ref_3
+        - 分类管理
+      security:
+        - JWT-auth: []
+    get:
+      operationId: CategoryController_findAll
+      summary: 获取分类列表
+      description: 获取激活状态的分类列表（公开接口）
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_3
+  /api/categories/admin:
+    get:
+      operationId: CategoryController_findAllForAdmin
+      summary: 管理员获取分类列表
+      description: 管理员获取所有状态的分类列表
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_3
+      security:
+        - JWT-auth: []
+  /api/categories/tree:
+    get:
+      operationId: CategoryController_findTree
+      summary: 获取分类树
+      description: 获取分类的树形结构（公开接口）
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_3
+  /api/categories/stats:
+    get:
+      operationId: CategoryController_getStats
+      summary: 获取分类统计
+      description: 获取分类统计信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_3
+      security:
+        - JWT-auth: []
+  /api/categories/slug/{slug}:
+    get:
+      operationId: CategoryController_findBySlug
+      summary: 根据别名获取分类
+      description: 根据别名获取分类详情（公开接口）
+      parameters:
+        - name: slug
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+        '404':
+          description: 分类不存在
+      tags: *ref_3
+  /api/categories/{id}:
+    get:
+      operationId: CategoryController_findOne
+      summary: 获取分类详情
+      description: 根据ID获取分类详情（公开接口）
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+        '404':
+          description: 分类不存在
+      tags: *ref_3
+    patch:
+      operationId: CategoryController_update
+      summary: 更新分类
+      description: 更新分类信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryDto'
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 分类不存在
+      tags: *ref_3
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: CategoryController_remove
+      summary: 删除分类
+      description: 删除指定分类
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 分类不存在
+      tags: *ref_3
+      security:
+        - JWT-auth: []
+  /api/categories/{id}/blog-count:
+    patch:
+      operationId: CategoryController_updateBlogCount
+      summary: 更新博客数量
+      description: 更新分类下的博客数量
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 分类不存在
+      tags: *ref_3
+      security:
+        - JWT-auth: []
+  /api/comments:
+    post:
+      operationId: CommentController_create
+      summary: 创建评论
+      description: 创建新评论
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentDto'
+      responses:
+        '201':
+          description: 创建成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: &ref_4
+        - 评论管理
+      security:
+        - JWT-auth: []
+    get:
+      operationId: CommentController_findAll
+      summary: 获取评论列表
+      description: 管理员获取所有评论列表
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/blog/{blogId}:
+    get:
+      operationId: CommentController_findByBlog
+      summary: 获取博客评论
+      description: 获取指定博客的评论列表（公开接口）
+      parameters:
+        - name: blogId
+          required: true
+          in: path
+          schema:
+            type: number
+        - name: includeChildren
+          required: true
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_4
+  /api/comments/my:
+    get:
+      operationId: CommentController_findMyComments
+      summary: 获取我的评论
+      description: 获取当前用户的评论列表
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/stats:
+    get:
+      operationId: CommentController_getStats
+      summary: 获取评论统计
+      description: 获取评论统计信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/{id}:
+    get:
+      operationId: CommentController_findOne
+      summary: 获取评论详情
+      description: 根据ID获取评论详情
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+    patch:
+      operationId: CommentController_update
+      summary: 更新评论
+      description: 更新评论内容
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentDto'
+      responses:
+        '200':
+          description: 更新成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: CommentController_remove
+      summary: 删除评论
+      description: 删除指定评论
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/{id}/status:
+    patch:
+      operationId: CommentController_changeStatus
+      summary: 修改评论状态
+      description: 修改评论的审核状态
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeCommentStatusDto'
+      responses:
+        '200':
+          description: 修改成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/{id}/approve:
+    post:
+      operationId: CommentController_approve
+      summary: 审核通过评论
+      description: 将评论状态设为审核通过
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 审核成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/{id}/reject:
+    post:
+      operationId: CommentController_reject
+      summary: 拒绝评论
+      description: 将评论状态设为拒绝
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 拒绝成功
+        '401':
+          description: 未授权访问
+        '403':
+          description: 权限不足
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+      security:
+        - JWT-auth: []
+  /api/comments/{id}/like:
+    post:
+      operationId: CommentController_likeComment
+      summary: 点赞评论
+      description: 为评论点赞
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 点赞成功
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+    delete:
+      operationId: CommentController_unlikeComment
+      summary: 取消点赞评论
+      description: 取消对评论的点赞
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 取消点赞成功
+        '404':
+          description: 评论不存在
+      tags: *ref_4
+  /api/cloud-functions:
+    post:
+      operationId: CloudFunctionController_create
+      summary: 创建云函数
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCloudFunctionDto'
+      responses:
+        '201':
+          description: 创建成功
+        '400':
+          description: 请求参数错误
+        '401':
+          description: 未授权
+        '403':
+          description: 权限不足
+      tags: &ref_5
+        - 云函数管理
+      security:
+        - JWT-auth: []
+    get:
+      operationId: CloudFunctionController_findAll
+      summary: 获取云函数列表
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 页码
+          schema:
+            minimum: 1
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 每页数量
+          schema:
+            minimum: 1
+            maximum: 100
+            default: 10
+            type: number
+        - name: search
+          required: false
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: type
+          required: false
+          in: query
+          description: 云函数类型
+          schema:
+            enum:
+              - json
+              - function
+            type: string
+        - name: method
+          required: false
+          in: query
+          description: 请求方法
+          schema:
+            enum:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - ALL
+            type: string
+        - name: status
+          required: false
+          in: query
+          description: 云函数状态
+          schema:
+            enum:
+              - active
+              - inactive
+              - error
+            type: string
+        - name: isPublic
+          required: false
+          in: query
+          description: 是否公开访问
+          schema:
+            type: boolean
+        - name: authorId
+          required: false
+          in: query
+          description: 作者ID
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+  /api/cloud-functions/{id}:
+    get:
+      operationId: CloudFunctionController_findOne
+      summary: 获取云函数详情
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+        '404':
+          description: 云函数不存在
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+    patch:
+      operationId: CloudFunctionController_update
+      summary: 更新云函数
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCloudFunctionDto'
+      responses:
+        '200':
+          description: 更新成功
+        '400':
+          description: 请求参数错误
+        '403':
+          description: 权限不足
+        '404':
+          description: 云函数不存在
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: CloudFunctionController_remove
+      summary: 删除云函数
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '403':
+          description: 权限不足
+        '404':
+          description: 云函数不存在
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+  /api/cloud-functions/{id}/secrets:
+    post:
+      operationId: CloudFunctionController_createSecret
+      summary: 创建云函数密钥
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCloudFunctionSecretDto'
+      responses:
+        '201':
+          description: 创建成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+  /api/cloud-functions/secrets/{secretId}:
+    patch:
+      operationId: CloudFunctionController_updateSecret
+      summary: 更新云函数密钥
+      parameters:
+        - name: secretId
+          required: true
+          in: path
+          description: 密钥ID
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCloudFunctionSecretDto'
+      responses:
+        '200':
+          description: 更新成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: CloudFunctionController_removeSecret
+      summary: 删除云函数密钥
+      parameters:
+        - name: secretId
+          required: true
+          in: path
+          description: 密钥ID
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+  /api/cloud-functions/{id}/logs:
+    get:
+      operationId: CloudFunctionController_getLogs
+      summary: 获取云函数日志
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+        - name: page
+          required: false
+          in: query
+          description: 页码
+          schema:
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 每页数量
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: CloudFunctionController_clearLogs
+      summary: 清理云函数日志
+      parameters:
+        - name: id
+          required: true
+          in: path
+          description: 云函数ID
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 清理成功
+      tags: *ref_5
+      security:
+        - JWT-auth: []
+  /api/fn/{reference}/*:
+    get:
+      operationId: CloudFunctionExecuteController_execute_get
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: &ref_6
+        - 云函数执行
+    post:
+      operationId: CloudFunctionExecuteController_execute_post
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    put:
+      operationId: CloudFunctionExecuteController_execute_put
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    delete:
+      operationId: CloudFunctionExecuteController_execute_delete
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    patch:
+      operationId: CloudFunctionExecuteController_execute_patch
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    options:
+      operationId: CloudFunctionExecuteController_execute_options
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    head:
+      operationId: CloudFunctionExecuteController_execute_head
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    search:
+      operationId: CloudFunctionExecuteController_execute_search
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    propfind:
+      operationId: CloudFunctionExecuteController_execute_propfind
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    proppatch:
+      operationId: CloudFunctionExecuteController_execute_proppatch
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    mkcol:
+      operationId: CloudFunctionExecuteController_execute_mkcol
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    copy:
+      operationId: CloudFunctionExecuteController_execute_copy
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    move:
+      operationId: CloudFunctionExecuteController_execute_move
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    lock:
+      operationId: CloudFunctionExecuteController_execute_lock
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+    unlock:
+      operationId: CloudFunctionExecuteController_execute_unlock
+      summary: 执行云函数
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 执行成功
+        '400':
+          description: 请求错误
+        '404':
+          description: 云函数不存在
+        '500':
+          description: 执行失败
+      tags: *ref_6
+  /api/fn/{reference}:
+    get:
+      operationId: CloudFunctionExecuteController_executeSimple_get
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    post:
+      operationId: CloudFunctionExecuteController_executeSimple_post
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    put:
+      operationId: CloudFunctionExecuteController_executeSimple_put
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    delete:
+      operationId: CloudFunctionExecuteController_executeSimple_delete
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    patch:
+      operationId: CloudFunctionExecuteController_executeSimple_patch
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    options:
+      operationId: CloudFunctionExecuteController_executeSimple_options
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    head:
+      operationId: CloudFunctionExecuteController_executeSimple_head
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    search:
+      operationId: CloudFunctionExecuteController_executeSimple_search
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    propfind:
+      operationId: CloudFunctionExecuteController_executeSimple_propfind
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    proppatch:
+      operationId: CloudFunctionExecuteController_executeSimple_proppatch
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    mkcol:
+      operationId: CloudFunctionExecuteController_executeSimple_mkcol
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    copy:
+      operationId: CloudFunctionExecuteController_executeSimple_copy
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    move:
+      operationId: CloudFunctionExecuteController_executeSimple_move
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    lock:
+      operationId: CloudFunctionExecuteController_executeSimple_lock
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+    unlock:
+      operationId: CloudFunctionExecuteController_executeSimple_unlock
+      summary: 执行云函数（无路径）
+      parameters:
+        - name: reference
+          required: true
+          in: path
+          description: 云函数引用名称
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+      tags: *ref_6
+  /api/upload:
+    post:
+      operationId: UploadController_uploadFile
+      summary: 上传文件
+      description: 上传单个文件到服务器
+      parameters: []
+      requestBody:
+        required: true
+        description: 文件上传
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 要上传的文件
+                description:
+                  type: string
+                  description: 文件描述
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 文件标签
+                generateThumbnail:
+                  type: boolean
+                  description: 是否生成缩略图（仅图片）
+                  default: true
+              required:
+                - file
+      responses:
+        '201':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponseDto'
+        '400':
+          description: 请求参数错误
+        '401':
+          description: 未授权访问
+        '413':
+          description: 文件过大
+      tags: &ref_7
+        - 文件上传
+      security:
+        - JWT-auth: []
+    get:
+      operationId: UploadController_findAll
+      summary: 获取文件列表
+      description: 分页获取用户的文件列表
+      parameters:
+        - name: page
+          required: false
+          in: query
+          description: 页码
+          schema:
+            default: 1
+            type: number
+        - name: limit
+          required: false
+          in: query
+          description: 每页数量
+          schema:
+            default: 20
+            type: number
+        - name: type
+          required: false
+          in: query
+          description: 文件类型
+          schema:
+            enum:
+              - image
+              - document
+              - video
+              - audio
+              - other
+            type: string
+        - name: status
+          required: false
+          in: query
+          description: 文件状态
+          schema:
+            enum:
+              - uploading
+              - completed
+              - failed
+              - deleted
+            type: string
+        - name: search
+          required: false
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: tag
+          required: false
+          in: query
+          description: 标签过滤
+          schema:
+            type: string
+        - name: sortBy
+          required: false
+          in: query
+          description: 排序字段
+          schema:
+            default: createdAt
+            type: string
+        - name: sortOrder
+          required: false
+          in: query
+          description: 排序方向
+          schema:
+            default: DESC
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: UploadController_batchDelete
+      summary: 批量删除文件
+      description: 批量删除多个文件
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchDeleteDto'
+      responses:
+        '200':
+          description: 批量删除成功
+        '400':
+          description: 请求参数错误
+        '401':
+          description: 未授权访问
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+  /api/upload/batch:
+    post:
+      operationId: UploadController_batchUpload
+      summary: 批量上传文件
+      description: 一次上传多个文件
+      parameters: []
+      requestBody:
+        required: true
+        description: 批量文件上传
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 要上传的文件列表
+                description:
+                  type: string
+                  description: 文件描述
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: 文件标签
+                generateThumbnail:
+                  type: boolean
+                  description: 是否生成缩略图（仅图片）
+                  default: true
+              required:
+                - files
+      responses:
+        '201':
+          description: 批量上传成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FileResponseDto'
+                  failed:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filename:
+                          type: string
+                        error:
+                          type: string
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+  /api/upload/stats:
+    get:
+      operationId: UploadController_getStats
+      summary: 获取文件统计
+      description: 获取用户的文件统计信息
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+  /api/upload/{id}/download-link:
+    post:
+      operationId: UploadController_generateDownloadLink
+      summary: 生成下载链接
+      description: 为文件生成临时下载链接
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 下载链接生成成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloadUrl:
+                    type: string
+                    description: 下载链接
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    description: 过期时间
+                  filename:
+                    type: string
+                    description: 文件名
+        '401':
+          description: 未授权访问
+        '404':
+          description: 文件不存在
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+  /api/upload/download/{token}:
+    get:
+      operationId: UploadController_downloadByToken
+      summary: 通过令牌下载文件
+      description: 使用临时令牌下载文件
+      parameters:
+        - name: token
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文件内容
+        '401':
+          description: 无效的下载令牌
+        '404':
+          description: 文件不存在
+      tags: *ref_7
+  /api/upload/thumbnails/{filename}:
+    get:
+      operationId: UploadController_getThumbnail
+      summary: 获取缩略图
+      description: 获取图片的缩略图（公开接口）
+      parameters:
+        - name: filename
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 缩略图内容
+        '404':
+          description: 缩略图不存在
+      tags: *ref_7
+  /api/upload/{id}:
+    get:
+      operationId: UploadController_findOne
+      summary: 获取文件详情
+      description: 根据ID获取文件详细信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponseDto'
+        '401':
+          description: 未授权访问
+        '404':
+          description: 文件不存在
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+    patch:
+      operationId: UploadController_update
+      summary: 更新文件信息
+      description: 更新文件的描述和标签等信息
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFileDto'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponseDto'
+        '401':
+          description: 未授权访问
+        '404':
+          description: 文件不存在
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: UploadController_remove
+      summary: 删除文件
+      description: 删除指定的文件
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: number
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+        '404':
+          description: 文件不存在
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+  /api/upload/paste:
+    post:
+      operationId: UploadController_pasteUpload
+      summary: 粘贴上传
+      description: 支持剪贴板粘贴上传图片
+      parameters: []
+      requestBody:
+        required: true
+        description: 粘贴上传
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 从剪贴板粘贴的文件
+                description:
+                  type: string
+                  description: 文件描述
+              required:
+                - file
+      responses:
+        '201':
+          description: 粘贴上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileResponseDto'
+      tags: *ref_7
+      security:
+        - JWT-auth: []
+info:
+  title: 博客后端系统
+  description: A modern blog API built with NestJS
+  version: 1.0.0
+  contact: {}
+tags:
+  - name: 认证管理
+    description: 用户认证相关接口
+  - name: 用户管理
+    description: 用户管理相关接口
+  - name: 博客管理
+    description: 博客管理相关接口
+  - name: 分类管理
+    description: 分类管理相关接口
+  - name: 评论管理
+    description: 评论管理相关接口
+servers: []
+components:
+  securitySchemes:
+    JWT-auth:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+      name: JWT
+      description: Enter JWT token
+      in: header
+  schemas:
+    RegisterDto:
+      type: object
+      properties: {}
+    LoginDto:
+      type: object
+      properties: {}
+    RefreshTokenDto:
+      type: object
+      properties: {}
+    CreateUserDto:
+      type: object
+      properties: {}
+    UpdateUserDto:
+      type: object
+      properties: {}
+    ChangeUserStatusDto:
+      type: object
+      properties: {}
+    AssignRoleDto:
+      type: object
+      properties: {}
+    CreateBlogDto:
+      type: object
+      properties: {}
+    UpdateBlogDto:
+      type: object
+      properties: {}
+    CreateCategoryDto:
+      type: object
+      properties: {}
+    UpdateCategoryDto:
+      type: object
+      properties: {}
+    CreateCommentDto:
+      type: object
+      properties: {}
+    UpdateCommentDto:
+      type: object
+      properties: {}
+    ChangeCommentStatusDto:
+      type: object
+      properties: {}
+    CreateCloudFunctionDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 云函数名称
+          example: theme-config
+        reference:
+          type: string
+          description: 引用名称
+          example: shiro
+        description:
+          type: string
+          description: 描述信息
+        type:
+          type: string
+          description: 云函数类型
+          enum: &ref_8
+            - json
+            - function
+          example: json
+        method:
+          type: string
+          description: 请求方法
+          enum: &ref_9
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - ALL
+          example: GET
+        content:
+          type: string
+          description: 云函数内容（JSON数据或函数代码）
+        config:
+          type: object
+          description: 额外配置信息
+        isPublic:
+          type: boolean
+          description: 是否公开访问
+          default: false
+        timeout:
+          type: number
+          description: 超时时间（毫秒）
+          default: 5000
+        headers:
+          type: object
+          description: 自定义响应头
+      required:
+        - name
+        - reference
+        - type
+        - method
+        - content
+    UpdateCloudFunctionDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: 云函数名称
+          example: theme-config
+        reference:
+          type: string
+          description: 引用名称
+          example: shiro
+        description:
+          type: string
+          description: 描述信息
+        type:
+          type: string
+          description: 云函数类型
+          enum: *ref_8
+          example: json
+        method:
+          type: string
+          description: 请求方法
+          enum: *ref_9
+          example: GET
+        content:
+          type: string
+          description: 云函数内容（JSON数据或函数代码）
+        config:
+          type: object
+          description: 额外配置信息
+        isPublic:
+          type: boolean
+          description: 是否公开访问
+          default: false
+        timeout:
+          type: number
+          description: 超时时间（毫秒）
+          default: 5000
+        headers:
+          type: object
+          description: 自定义响应头
+        status:
+          type: string
+          description: 云函数状态
+          enum:
+            - active
+            - inactive
+            - error
+    CreateCloudFunctionSecretDto:
+      type: object
+      properties:
+        key:
+          type: string
+          description: 密钥名称
+          example: api_key
+        value:
+          type: string
+          description: 密钥值
+        description:
+          type: string
+          description: 密钥描述
+        isActive:
+          type: boolean
+          description: 是否启用
+          default: true
+      required:
+        - key
+        - value
+    UpdateCloudFunctionSecretDto:
+      type: object
+      properties:
+        value:
+          type: string
+          description: 密钥值
+        description:
+          type: string
+          description: 密钥描述
+        isActive:
+          type: boolean
+          description: 是否启用
+    FileResponseDto:
+      type: object
+      properties:
+        id:
+          type: number
+          description: 文件ID
+        originalName:
+          type: string
+          description: 原始文件名
+        filename:
+          type: string
+          description: 存储文件名
+        mimeType:
+          type: string
+          description: MIME类型
+        size:
+          type: number
+          description: 文件大小（字节）
+        formattedSize:
+          type: string
+          description: 格式化的文件大小
+        type:
+          type: string
+          description: 文件类型
+          enum:
+            - image
+            - document
+            - video
+            - audio
+            - other
+        status:
+          type: string
+          description: 文件状态
+          enum:
+            - uploading
+            - completed
+            - failed
+            - deleted
+        metadata:
+          type: object
+          description: 文件元数据
+        thumbnailUrl:
+          type: object
+          description: 缩略图URL
+        description:
+          type: string
+          description: 文件描述
+        tags:
+          description: 文件标签
+          type: array
+          items:
+            type: string
+        downloadCount:
+          type: number
+          description: 下载次数
+        createdAt:
+          format: date-time
+          type: string
+          description: 创建时间
+        updatedAt:
+          format: date-time
+          type: string
+          description: 更新时间
+      required:
+        - id
+        - originalName
+        - filename
+        - mimeType
+        - size
+        - formattedSize
+        - type
+        - status
+        - downloadCount
+        - createdAt
+        - updatedAt
+    UpdateFileDto:
+      type: object
+      properties:
+        description:
+          type: string
+          description: 文件描述
+        tags:
+          description: 文件标签
+          type: array
+          items:
+            type: string
+    BatchDeleteDto:
+      type: object
+      properties:
+        fileIds:
+          description: 文件ID列表
+          type: array
+          items:
+            type: number
+      required:
+        - fileIds
