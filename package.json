@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
     "@tanstack/react-query": "^5.81.5",
     "@tauri-apps/api": "^2.6.0",

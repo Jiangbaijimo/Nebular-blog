@@ -685,8 +685,118 @@
       "get": {
         "operationId": "BlogController_findAll",
         "summary": "获取博客列表",
-        "description": "获取已发布的博客列表（公开接口）",
-        "parameters": [],
+        "description": "获取已发布的博客列表（公开接口）\n\n支持的查询参数：\n- page: 页码（默认1）\n- limit: 每页数量（默认10）\n- search: 搜索关键词（标题、摘要、内容）\n- categoryId: 分类ID\n- tag: 标签\n- sortBy: 排序字段（createdAt, publishedAt, viewCount, likeCount）\n- sortOrder: 排序方向（ASC, DESC）\n\n示例：\n- /api/blogs?page=1&limit=10\n- /api/blogs?categoryId=1&page=1\n- /api/blogs?search=JavaScript&sortBy=viewCount&sortOrder=DESC",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "博客状态",
+            "schema": {
+              "example": "published",
+              "enum": [
+                "draft",
+                "published",
+                "archived"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词（标题、摘要、内容）",
+            "schema": {
+              "example": "JavaScript",
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "分类ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "authorId",
+            "required": false,
+            "in": "query",
+            "description": "作者ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "description": "标签",
+            "schema": {
+              "example": "frontend",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "排序字段",
+            "schema": {
+              "default": "createdAt",
+              "example": "createdAt",
+              "enum": [
+                "createdAt",
+                "publishedAt",
+                "viewCount",
+                "likeCount"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "排序方向",
+            "schema": {
+              "default": "DESC",
+              "example": "DESC",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "获取成功"
@@ -702,7 +812,117 @@
         "operationId": "BlogController_findAllForAdmin",
         "summary": "管理员获取博客列表",
         "description": "管理员获取所有状态的博客列表",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "博客状态",
+            "schema": {
+              "example": "published",
+              "enum": [
+                "draft",
+                "published",
+                "archived"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词（标题、摘要、内容）",
+            "schema": {
+              "example": "JavaScript",
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "分类ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "authorId",
+            "required": false,
+            "in": "query",
+            "description": "作者ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "description": "标签",
+            "schema": {
+              "example": "frontend",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "排序字段",
+            "schema": {
+              "default": "createdAt",
+              "example": "createdAt",
+              "enum": [
+                "createdAt",
+                "publishedAt",
+                "viewCount",
+                "likeCount"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "排序方向",
+            "schema": {
+              "default": "DESC",
+              "example": "DESC",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "获取成功"
@@ -729,7 +949,117 @@
         "operationId": "BlogController_findMyBlogs",
         "summary": "获取我的博客",
         "description": "获取当前用户的博客列表",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "default": 1,
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "default": 10,
+              "example": 10,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "博客状态",
+            "schema": {
+              "example": "published",
+              "enum": [
+                "draft",
+                "published",
+                "archived"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "搜索关键词（标题、摘要、内容）",
+            "schema": {
+              "example": "JavaScript",
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "分类ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "authorId",
+            "required": false,
+            "in": "query",
+            "description": "作者ID",
+            "schema": {
+              "example": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "tag",
+            "required": false,
+            "in": "query",
+            "description": "标签",
+            "schema": {
+              "example": "frontend",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "required": false,
+            "in": "query",
+            "description": "排序字段",
+            "schema": {
+              "default": "createdAt",
+              "example": "createdAt",
+              "enum": [
+                "createdAt",
+                "publishedAt",
+                "viewCount",
+                "likeCount"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "required": false,
+            "in": "query",
+            "description": "排序方向",
+            "schema": {
+              "default": "DESC",
+              "example": "DESC",
+              "enum": [
+                "ASC",
+                "DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "获取成功"
