@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, 
@@ -37,6 +37,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showSecretMessage, setShowSecretMessage] = useState(false);
+  
+  // 双击检测
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickCountRef = useRef(0);
 
   // 导航菜单项
   const navItems = [
@@ -45,10 +50,10 @@ export const Header: React.FC<HeaderProps> = ({
     { path: '/editor', label: '写作', icon: Edit, requireAuth: true },
   ];
 
-  // 管理员菜单项
-  const adminNavItems = [
-    { path: '/admin', label: '管理后台', icon: Shield, requireAdmin: true },
-  ];
+  // 管理员菜单项（已隐藏，通过双击Logo进入）
+  // const adminNavItems = [
+  //   { path: '/admin', label: '管理后台', icon: Shield, requireAdmin: true },
+  // ];
 
   const handleLogout = async () => {
     try {
@@ -82,6 +87,39 @@ export const Header: React.FC<HeaderProps> = ({
     return location.pathname.startsWith(path);
   };
 
+  // 处理Logo双击事件
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    clickCountRef.current += 1;
+    
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+    
+    clickTimeoutRef.current = setTimeout(() => {
+      if (clickCountRef.current === 1) {
+        // 单击 - 正常跳转到首页
+        navigate('/');
+      } else if (clickCountRef.current === 2) {
+        // 双击 - 神秘入口逻辑
+        if (!isAuthenticated) {
+          // 未登录用户显示神秘消息
+          setShowSecretMessage(true);
+          setTimeout(() => setShowSecretMessage(false), 3000);
+        } else if (isAdmin) {
+          // 管理员用户进入管理后台
+          navigate('/admin');
+        } else {
+          // 普通登录用户显示神秘消息
+          setShowSecretMessage(true);
+          setTimeout(() => setShowSecretMessage(false), 3000);
+        }
+      }
+      clickCountRef.current = 0;
+    }, 300); // 300ms内的点击算作双击
+  };
+
   return (
     <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -98,16 +136,28 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Logo */}
-            <Link 
-              to="/" 
-              className="flex items-center space-x-2 text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-white" />
-              </div>
-              <span>博客系统</span>
-            </Link>
+            {/* Logo - 神秘入口 */}
+            <div className="relative">
+              <button
+                onClick={handleLogoClick}
+                className="flex items-center space-x-2 text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <BookOpen className="h-5 w-5 text-white" />
+                </div>
+                <span>博客系统</span>
+              </button>
+              
+              {/* 神秘消息提示 */}
+              {showSecretMessage && (
+                <div className="absolute top-full left-0 mt-2 p-3 bg-gray-800 dark:bg-gray-700 text-white text-sm rounded-lg shadow-lg whitespace-nowrap z-50 animate-fade-in">
+                  <div className="relative">
+                    你发现了神秘的登录入口，但这里什么也没有 🤫
+                    <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-800 dark:bg-gray-700 rotate-45"></div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* 主导航（桌面端） */}
             <nav className="hidden md:flex space-x-6">
@@ -133,24 +183,7 @@ export const Header: React.FC<HeaderProps> = ({
                 );
               })}
 
-              {/* 管理员导航 */}
-              {isAdmin && adminNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActivePath(item.path)
-                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+              {/* 管理员导航已隐藏 - 通过双击Logo进入 */}
             </nav>
           </div>
 
@@ -315,24 +348,7 @@ export const Header: React.FC<HeaderProps> = ({
               );
             })}
 
-            {/* 管理员导航（移动端） */}
-            {isAdmin && adminNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActivePath(item.path)
-                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+            {/* 管理员导航已隐藏（移动端） - 通过双击Logo进入 */}
           </nav>
         </div>
       )}

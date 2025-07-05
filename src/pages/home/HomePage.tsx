@@ -2,37 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Github, Twitter, Linkedin, MapPin, Calendar, ArrowDown } from 'lucide-react';
 import { blogAPI } from '../../services/api';
+import { cloudFunctionThemeAPI, type ThemeConfig } from '../../services/api/cloudFunctionTheme';
 import { formatDate } from '../../utils/dateUtils';
 import type { BlogPost } from '../../types/blog';
 
 const HomePage: React.FC = () => {
   const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
+  const [themeConfig, setThemeConfig] = useState<ThemeConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取最新文章
+  // 获取主题配置和最新文章
   useEffect(() => {
-    const fetchRecentPosts = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await blogAPI.getBlogs({
-          page: 1,
-          limit: 3,
-          status: 'published',
-          sortBy: 'createdAt',
-          sortOrder: 'desc'
-        });
-        setRecentPosts(response.data || []);
+        
+        // 并行获取主题配置和博客数据
+        const [themeConfigData, blogsResponse] = await Promise.all([
+          cloudFunctionThemeAPI.getShiroThemeConfig(),
+          blogAPI.getBlogs({
+            page: 1,
+            limit: 3,
+            status: 'published',
+            sortBy: 'createdAt',
+            sortOrder: 'desc'
+          })
+        ]);
+        
+        setThemeConfig(themeConfigData);
+        setRecentPosts(blogsResponse.data || []);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch recent posts:', err);
-        setError('获取最新文章失败');
+        console.error('Failed to fetch data:', err);
+        setError('获取数据失败');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRecentPosts();
+    fetchData();
   }, []);
 
   const socialLinks = [
@@ -87,14 +96,26 @@ const HomePage: React.FC = () => {
             
             {/* Profile Info */}
             <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-                Hi, I'm <span className="text-blue-600">Innei</span> 👋
-              </h1>
+              {/* 动态标题 */}
+              <div className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+                {themeConfig?.config.hero.title.template.map((item, index) => {
+                  const Component = item.type as keyof JSX.IntrinsicElements;
+                  return (
+                    <Component key={index} className={item.class}>
+                      {item.text}
+                    </Component>
+                  );
+                }) || (
+                  <>
+                    Hi, I'm <span className="text-blue-600">Innei</span> 👋
+                  </>
+                )}
+              </div>
               <h2 className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-6">
                 A Node.JS Full Stack <span className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded font-mono text-sm">&lt;Developer /&gt;</span>
               </h2>
               <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-2xl">
-                An independent developer coding with love
+                {themeConfig?.config.hero.description || 'An independent developer coding with love'}
               </p>
               
               {/* Social Links */}
@@ -282,6 +303,77 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+        <div className="max-w-6xl mx-auto px-6 py-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* 动态页脚链接 - 从主题配置获取 */}
+            {themeConfig?.footer.linkSections.map((section, index) => (
+              <div key={index}>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  {section.name}
+                </h3>
+                <ul className="space-y-2">
+                  {section.links.map((link, linkIndex) => (
+                    <li key={linkIndex}>
+                      <a
+                        href={link.href}
+                        target={link.external ? "_blank" : undefined}
+                        rel={link.external ? "noopener noreferrer" : undefined}
+                        className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        {link.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )) || (
+              // 默认页脚内容
+              <>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    快速链接
+                  </h3>
+                  <ul className="space-y-2">
+                    <li><Link to="/blog" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">博客</Link></li>
+                    <li><Link to="/about" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">关于</Link></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    联系方式
+                  </h3>
+                  <ul className="space-y-2">
+                    <li><a href="mailto:contact@example.com" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">邮箱</a></li>
+                    <li><a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">GitHub</a></li>
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 text-center">
+            <p className="text-gray-600 dark:text-gray-400">
+              {themeConfig?.footer.otherInfo?.date ? `© ${themeConfig.footer.otherInfo.date} Innei. All rights reserved.` : '© 2024 Innei. All rights reserved.'}
+              {themeConfig?.footer.otherInfo?.icp && (
+                <>
+                  {' | '}
+                  <a 
+                    href={themeConfig.footer.otherInfo.icp.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  >
+                    {themeConfig.footer.otherInfo.icp.text}
+                  </a>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
