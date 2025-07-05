@@ -124,3 +124,112 @@ export interface PaginatedPosts {
   pageSize: number;
   totalPages: number;
 }
+
+// API 请求和响应类型
+export interface BlogListParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  category?: string;
+  tag?: string;
+  search?: string;
+  authorId?: string;
+}
+
+export interface BlogListResponse {
+  data: BlogPost[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface BlogCreateRequest {
+  title: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  tags?: string[];
+  categories?: string[];
+  status?: PostStatus;
+  publishedAt?: Date;
+  metadata?: PostMetadata;
+}
+
+export interface BlogUpdateRequest extends Partial<BlogCreateRequest> {
+  id: string;
+}
+
+export interface BlogSearchParams {
+  query: string;
+  filters?: {
+    categories?: string[];
+    tags?: string[];
+    dateRange?: {
+      start: Date;
+      end: Date;
+    };
+  };
+  page?: number;
+  limit?: number;
+}
+
+export interface BlogSearchResponse {
+  results: BlogPost[];
+  total: number;
+  page: number;
+  limit: number;
+  suggestions?: string[];
+}
+
+export interface CommentCreateRequest {
+  postId: string;
+  content: string;
+  parentId?: string;
+  authorName: string;
+  authorEmail?: string;
+}
+
+export interface CommentUpdateRequest {
+  content: string;
+  status?: CommentStatus;
+}
+
+export interface BlogDraft {
+  id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  tags?: string[];
+  categories?: string[];
+  authorId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  metadata?: PostMetadata;
+}
+
+export interface BlogVersion {
+  id: string;
+  blogId: string;
+  version: number;
+  title: string;
+  content: string;
+  excerpt?: string;
+  coverImage?: string;
+  tags?: string[];
+  categories?: string[];
+  createdAt: Date;
+  createdBy: string;
+  changeLog?: string;
+}
+
+// 重新导出为 Blog 类型（兼容性）
+export type Blog = BlogPost;
+
+// 导出所有状态枚举的字符串联合类型
+export type PostStatusString = keyof typeof PostStatus;
+export type SyncStatusString = keyof typeof SyncStatus;
+export type CommentStatusString = keyof typeof CommentStatus;

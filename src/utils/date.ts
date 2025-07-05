@@ -554,3 +554,37 @@ export const isValidDate = (
   const date = parseDate(dateString, format);
   return date !== null && !isNaN(date.getTime());
 };
+
+/**
+ * 格式化阅读时间
+ * @param wordCount 字数
+ * @param wordsPerMinute 每分钟阅读字数（默认200）
+ * @returns 阅读时间字符串
+ */
+export const formatReadTime = (
+  wordCount: number,
+  wordsPerMinute = 200
+): string => {
+  if (wordCount <= 0) {
+    return '0 分钟';
+  }
+  
+  const minutes = Math.ceil(wordCount / wordsPerMinute);
+  
+  if (minutes < 1) {
+    return '不到 1 分钟';
+  }
+  
+  if (minutes < 60) {
+    return `${minutes} 分钟`;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  
+  if (remainingMinutes === 0) {
+    return `${hours} 小时`;
+  }
+  
+  return `${hours} 小时 ${remainingMinutes} 分钟`;
+};

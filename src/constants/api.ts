@@ -39,6 +39,35 @@ export const API_ENDPOINTS = {
   },
 
   // 博客相关
+  BLOG: {
+    LIST: `${API_BASE_URL}/blogs`,
+    CREATE: `${API_BASE_URL}/blogs`,
+    DETAIL: `${API_BASE_URL}/blogs`,
+    BY_SLUG: `${API_BASE_URL}/blogs/slug`,
+    UPDATE: `${API_BASE_URL}/blogs`,
+    DELETE: `${API_BASE_URL}/blogs`,
+    BULK_DELETE: `${API_BASE_URL}/blogs/bulk-delete`,
+    PUBLISH: `${API_BASE_URL}/blogs`,
+    UNPUBLISH: `${API_BASE_URL}/blogs`,
+    LIKE: `${API_BASE_URL}/blogs`,
+    FAVORITE: `${API_BASE_URL}/blogs`,
+    VIEW: `${API_BASE_URL}/blogs`,
+    SEARCH: `${API_BASE_URL}/blogs/search`,
+    SEARCH_SUGGESTIONS: `${API_BASE_URL}/blogs/search/suggestions`,
+    CATEGORIES: `${API_BASE_URL}/blogs/categories`,
+    TAGS: `${API_BASE_URL}/blogs/tags`,
+    COMMENTS: `${API_BASE_URL}/blogs/comments`,
+    DRAFTS: `${API_BASE_URL}/blogs/drafts`,
+    VERSIONS: `${API_BASE_URL}/blogs/versions`,
+    STATS: `${API_BASE_URL}/blogs/stats`,
+    HOT: `${API_BASE_URL}/blogs/hot`,
+    RECOMMENDED: `${API_BASE_URL}/blogs/recommended`,
+    LATEST: `${API_BASE_URL}/blogs/latest`,
+    EXPORT: `${API_BASE_URL}/blogs/export`,
+    IMPORT: `${API_BASE_URL}/blogs/import`,
+  },
+
+  // 文章相关（兼容性保留）
   POSTS: {
     LIST: `${API_BASE_URL}/posts`,
     CREATE: `${API_BASE_URL}/posts`,
