@@ -411,7 +411,7 @@ const initialSettingsState: SettingsState = {
 
 // ==================== 设置Store ====================
 
-export const useSettingsStore = create<SettingsState & SettingsActions>()()
+export const useSettingsStore = create<SettingsState & SettingsActions>()
   devtools(
     persist(
       subscribeWithSelector(

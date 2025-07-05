@@ -215,7 +215,7 @@ const createSyncTask = (itemId: string, operation: SyncOperation, direction: Syn
 
 // ==================== 同步Store ====================
 
-export const useSyncStore = create<SyncState & SyncActions>()()
+export const useSyncStore = create<SyncState & SyncActions>()
   devtools(
     persist(
       subscribeWithSelector(

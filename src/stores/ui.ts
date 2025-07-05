@@ -356,7 +356,7 @@ const matchesShortcut = (event: KeyboardEvent, config: ShortcutConfig): boolean 
 
 // ==================== UI Store ====================
 
-export const useUIStore = create<UIState & UIActions>()()
+export const useUIStore = create<UIState & UIActions>()
   devtools(
     persist(
       subscribeWithSelector(

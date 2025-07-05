@@ -112,7 +112,7 @@ const initialState: AuthState = {
 };
 
 // 创建认证store
-export const useAuthStore = create<AuthStore>()()
+export const useAuthStore = create<AuthStore>()
   (persist(
     immer((set, get) => ({
       ...initialState,

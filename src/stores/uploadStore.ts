@@ -243,7 +243,7 @@ const initialState: UploadState = {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // 创建上传store
-export const useUploadStore = create<UploadStore>()()
+export const useUploadStore = create<UploadStore>()
   (persist(
     immer((set, get) => ({
       ...initialState,

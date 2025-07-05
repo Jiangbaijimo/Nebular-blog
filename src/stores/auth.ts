@@ -175,7 +175,7 @@ const isTokenValid = (token: string, expiry: number): boolean => {
 
 // ==================== 认证Store ====================
 
-export const useAuthStore = create<AuthState & AuthActions>()()
+export const useAuthStore = create<AuthState & AuthActions>()
   devtools(
     persist(
       subscribeWithSelector(

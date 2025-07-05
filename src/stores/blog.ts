@@ -249,7 +249,7 @@ const removePostFromList = (posts: BlogPost[], postId: string): BlogPost[] => {
 
 // ==================== 博客Store ====================
 
-export const useBlogStore = create<BlogState & BlogActions>()()
+export const useBlogStore = create<BlogState & BlogActions>()
   devtools(
     persist(
       subscribeWithSelector(

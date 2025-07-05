@@ -273,7 +273,7 @@ const initialState: AppState = {
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // 创建应用store
-export const useAppStore = create<AppStore>()()
+export const useAppStore = create<AppStore>()
   (persist(
     immer((set, get) => ({
       ...initialState,

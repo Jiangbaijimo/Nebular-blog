@@ -364,7 +364,7 @@ function generateHistoryId(): string {
 
 // ==================== 编辑器Store ====================
 
-export const useEditorStore = create<EditorState & EditorActions>()()
+export const useEditorStore = create<EditorState & EditorActions>()
   devtools(
     persist(
       subscribeWithSelector(

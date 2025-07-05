@@ -215,7 +215,7 @@ const createUploadTask = (file: File, options: Partial<UploadTask> = {}): Upload
 
 // ==================== 上传Store ====================
 
-export const useUploadStore = create<UploadState & UploadActions>()()
+export const useUploadStore = create<UploadState & UploadActions>()
   devtools(
     persist(
       subscribeWithSelector(

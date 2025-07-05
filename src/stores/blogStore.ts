@@ -209,7 +209,7 @@ const initialState: BlogState = {
 };
 
 // 创建博客store
-export const useBlogStore = create<BlogStore>()()
+export const useBlogStore = create<BlogStore>()
   (persist(
     immer((set, get) => ({
       ...initialState,
