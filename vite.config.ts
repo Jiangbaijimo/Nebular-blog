@@ -26,6 +26,66 @@ export default defineConfig(async () => ({
     },
   },
 
+  // Build optimization
+  build: {
+    // 启用代码分割
+    rollupOptions: {
+      output: {
+        // 手动分割代码块
+        manualChunks: {
+          // 将 React 相关库分离到单独的 chunk
+          'react-vendor': ['react', 'react-dom'],
+          // 将路由相关库分离
+          'router-vendor': ['react-router-dom'],
+          // 将状态管理库分离
+          'store-vendor': ['zustand'],
+          // 将 UI 库分离
+          'ui-vendor': ['framer-motion', '@headlessui/react'],
+          // 将编辑器相关库分离
+          'editor-vendor': ['@monaco-editor/react', 'monaco-editor'],
+          // 将工具库分离
+          'utils-vendor': ['lodash', 'date-fns', 'crypto-js'],
+        },
+        // 优化 chunk 文件名
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId
+            ? chunkInfo.facadeModuleId.split('/').pop()
+            : 'chunk';
+          return `js/[name]-[hash].js`;
+        },
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+      },
+    },
+    // 启用压缩
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // 移除 console.log
+        drop_console: true,
+        // 移除 debugger
+        drop_debugger: true,
+      },
+    },
+    // 设置 chunk 大小警告限制
+    chunkSizeWarningLimit: 1000,
+    // 启用 CSS 代码分割
+    cssCodeSplit: true,
+  },
+
+  // 优化依赖预构建
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'zustand',
+      'framer-motion',
+      '@headlessui/react',
+    ],
+    exclude: ['@tauri-apps/api'],
+  },
+
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
   // 1. prevent vite from obscuring rust errors
