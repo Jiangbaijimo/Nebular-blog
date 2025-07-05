@@ -110,8 +110,8 @@ const SystemSetup: React.FC = () => {
         nickname: formData.nickname
       });
 
-      // 设置成功，跳转到首页
-      navigate('/', { replace: true });
+      // 设置成功，刷新页面以重新检查初始化状态
+      window.location.href = '/';
     } catch (error: any) {
       console.error('系统初始化失败:', error);
       setSubmitError(
