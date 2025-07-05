@@ -99,10 +99,18 @@ const Login: React.FC = () => {
     try {
       const response = await authAPI.login(formData);
       
+      // 从嵌套的响应结构中提取token数据
+      const tokenData = response.data?.data || response.data || response;
+      
+      // 验证token数据
+      if (!tokenData.accessToken || !tokenData.refreshToken) {
+        throw new Error('登录响应中缺少必要的token信息');
+      }
+      
       // 保存Token
       await tokenManager.setTokens({
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
+        accessToken: tokenData.accessToken,
+        refreshToken: tokenData.refreshToken,
       });
       
       // 跳转到目标页面

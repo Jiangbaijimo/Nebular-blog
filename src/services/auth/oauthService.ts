@@ -1,6 +1,6 @@
 // OAuth认证服务
 import { invoke } from '@tauri-apps/api/core';
-import { open } from '@tauri-apps/plugin-opener';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { listen } from '@tauri-apps/api/event';
 import tokenManager from './tokenManager';
 import type {
@@ -42,8 +42,8 @@ class OAuthService {
   private initializeConfigs(): void {
     // Google OAuth配置
     this.configs.set('google', {
-      clientId: process.env.VITE_GOOGLE_CLIENT_ID || '',
-      clientSecret: process.env.VITE_GOOGLE_CLIENT_SECRET || '',
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+      clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || '',
       redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/google`,
       scope: 'openid profile email',
       authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -53,8 +53,8 @@ class OAuthService {
 
     // GitHub OAuth配置
     this.configs.set('github', {
-      clientId: process.env.VITE_GITHUB_CLIENT_ID || '',
-      clientSecret: process.env.VITE_GITHUB_CLIENT_SECRET || '',
+      clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
+      clientSecret: import.meta.env.VITE_GITHUB_CLIENT_SECRET || '',
       redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/github`,
       scope: 'user:email',
       authUrl: 'https://github.com/login/oauth/authorize',
@@ -64,8 +64,8 @@ class OAuthService {
 
     // Microsoft OAuth配置
     this.configs.set('microsoft', {
-      clientId: process.env.VITE_MICROSOFT_CLIENT_ID || '',
-      clientSecret: process.env.VITE_MICROSOFT_CLIENT_SECRET || '',
+      clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID || '',
+      clientSecret: import.meta.env.VITE_MICROSOFT_CLIENT_SECRET || '',
       redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/microsoft`,
       scope: 'openid profile email',
       authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
@@ -79,14 +79,24 @@ class OAuthService {
    */
   private async setupCallbackListener(): Promise<void> {
     try {
-      // 监听来自Tauri后端的OAuth回调事件
-      await listen('oauth-callback', (event: any) => {
-        this.handleOAuthCallback(event.payload);
-      });
+      // 检查是否在Tauri环境中
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        // 监听来自Tauri后端的OAuth回调事件
+        const unlisten = await listen('oauth-callback', (event: any) => {
+          this.handleOAuthCallback(event.payload);
+        });
 
-      console.log('OAuth callback listener setup complete');
+        console.log('OAuth callback listener setup complete');
+        
+        // 可以保存unlisten函数以便后续清理
+        // this.unlistenCallback = unlisten;
+      } else {
+        console.warn('Not running in Tauri environment, OAuth callback listener not available');
+      }
     } catch (error) {
       console.error('Failed to setup OAuth callback listener:', error);
+      // 如果监听器设置失败，不要阻止整个服务的初始化
+      console.warn('OAuth callback listener is not available, OAuth functionality may be limited');
     }
   }
 
@@ -124,7 +134,7 @@ class OAuthService {
       await this.startCallbackServer();
 
       // 在默认浏览器中打开授权URL
-      await open(authUrl);
+      await openUrl(authUrl);
 
       // 返回Promise，等待回调
       return new Promise((resolve, reject) => {

@@ -201,7 +201,17 @@ class TokenManager {
    */
   private parseJWT(token: string): TokenPayload {
     try {
-      const base64Url = token.split('.')[1];
+      // 验证token是否为字符串
+      if (typeof token !== 'string' || !token) {
+        throw new Error('Token must be a non-empty string');
+      }
+      
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Invalid JWT format: must have 3 parts');
+      }
+      
+      const base64Url = parts[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
         atob(base64)
@@ -256,21 +266,33 @@ class TokenManager {
    */
   private async loadTokensFromStorage(): Promise<void> {
     try {
-      // 使用Tauri的安全存储
-      this.accessToken = await invoke<string | null>('get_secure_storage', {
-        key: this.ACCESS_TOKEN_KEY,
-      }).catch(() => null);
-      
-      this.refreshToken = await invoke<string | null>('get_secure_storage', {
-        key: this.REFRESH_TOKEN_KEY,
-      }).catch(() => null);
-      
-      const expiryStr = await invoke<string | null>('get_secure_storage', {
-        key: this.TOKEN_EXPIRY_KEY,
-      }).catch(() => null);
-      
-      if (expiryStr) {
-        this.tokenExpiry = parseInt(expiryStr);
+      // 检查是否在Tauri环境中
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        // 使用Tauri的安全存储
+        this.accessToken = await invoke<string | null>('get_secure_storage', {
+          key: this.ACCESS_TOKEN_KEY,
+        }).catch(() => null);
+        
+        this.refreshToken = await invoke<string | null>('get_secure_storage', {
+          key: this.REFRESH_TOKEN_KEY,
+        }).catch(() => null);
+        
+        const expiryStr = await invoke<string | null>('get_secure_storage', {
+          key: this.TOKEN_EXPIRY_KEY,
+        }).catch(() => null);
+        
+        if (expiryStr) {
+          this.tokenExpiry = parseInt(expiryStr);
+        }
+      } else {
+        // 在非Tauri环境中使用localStorage作为后备
+        this.accessToken = localStorage.getItem(this.ACCESS_TOKEN_KEY);
+        this.refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+        
+        const expiryStr = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+        if (expiryStr) {
+          this.tokenExpiry = parseInt(expiryStr);
+        }
       }
       
       // 检查令牌是否已过期
@@ -291,25 +313,41 @@ class TokenManager {
    */
   private async saveTokensToStorage(): Promise<void> {
     try {
-      if (this.accessToken) {
-        await invoke('set_secure_storage', {
-          key: this.ACCESS_TOKEN_KEY,
-          value: this.accessToken,
-        });
-      }
-      
-      if (this.refreshToken) {
-        await invoke('set_secure_storage', {
-          key: this.REFRESH_TOKEN_KEY,
-          value: this.refreshToken,
-        });
-      }
-      
-      if (this.tokenExpiry) {
-        await invoke('set_secure_storage', {
-          key: this.TOKEN_EXPIRY_KEY,
-          value: this.tokenExpiry.toString(),
-        });
+      // 检查是否在Tauri环境中
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        if (this.accessToken) {
+          await invoke('set_secure_storage', {
+            key: this.ACCESS_TOKEN_KEY,
+            value: this.accessToken,
+          });
+        }
+        
+        if (this.refreshToken) {
+          await invoke('set_secure_storage', {
+            key: this.REFRESH_TOKEN_KEY,
+            value: this.refreshToken,
+          });
+        }
+        
+        if (this.tokenExpiry) {
+          await invoke('set_secure_storage', {
+            key: this.TOKEN_EXPIRY_KEY,
+            value: this.tokenExpiry.toString(),
+          });
+        }
+      } else {
+        // 在非Tauri环境中使用localStorage作为后备
+        if (this.accessToken) {
+          localStorage.setItem(this.ACCESS_TOKEN_KEY, this.accessToken);
+        }
+        
+        if (this.refreshToken) {
+          localStorage.setItem(this.REFRESH_TOKEN_KEY, this.refreshToken);
+        }
+        
+        if (this.tokenExpiry) {
+          localStorage.setItem(this.TOKEN_EXPIRY_KEY, this.tokenExpiry.toString());
+        }
       }
       
       console.log('Tokens saved to storage');
@@ -324,9 +362,17 @@ class TokenManager {
    */
   private async removeTokensFromStorage(): Promise<void> {
     try {
-      await invoke('remove_secure_storage', { key: this.ACCESS_TOKEN_KEY });
-      await invoke('remove_secure_storage', { key: this.REFRESH_TOKEN_KEY });
-      await invoke('remove_secure_storage', { key: this.TOKEN_EXPIRY_KEY });
+      // 检查是否在Tauri环境中
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        await invoke('remove_secure_storage', { key: this.ACCESS_TOKEN_KEY });
+        await invoke('remove_secure_storage', { key: this.REFRESH_TOKEN_KEY });
+        await invoke('remove_secure_storage', { key: this.TOKEN_EXPIRY_KEY });
+      } else {
+        // 在非Tauri环境中使用localStorage作为后备
+        localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+        localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+        localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
+      }
       
       console.log('Tokens removed from storage');
     } catch (error) {
@@ -454,6 +500,34 @@ class TokenManager {
   getUsername(): string | null {
     const payload = this.getTokenPayload();
     return payload?.username || null;
+  }
+
+  /**
+   * 检查是否已认证
+   */
+  async isAuthenticated(): Promise<boolean> {
+    // 如果没有访问令牌，尝试从存储加载
+    if (!this.accessToken) {
+      await this.loadTokensFromStorage();
+    }
+    
+    // 检查是否有有效的访问令牌
+    if (this.hasValidAccessToken()) {
+      return true;
+    }
+    
+    // 如果访问令牌无效但有刷新令牌，尝试刷新
+    if (this.hasRefreshToken()) {
+      try {
+        await this.refreshAccessToken();
+        return this.hasValidAccessToken();
+      } catch (error) {
+        console.error('Failed to refresh token during authentication check:', error);
+        return false;
+      }
+    }
+    
+    return false;
   }
 
   /**
