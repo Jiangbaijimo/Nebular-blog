@@ -102,6 +102,15 @@ export default defineConfig(async () => ({
           port: 3001,
         }
       : undefined,
+    // 代理配置，将API请求转发到后端
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    },
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],

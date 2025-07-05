@@ -1,8 +1,9 @@
 // API端点配置
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
-const CLOUD_FUNCTION_URL = import.meta.env.VITE_CLOUD_FUNCTION_URL || 'http://localhost:3000/api/fn';
-const UPLOAD_URL = import.meta.env.VITE_UPLOAD_URL || 'http://localhost:3000/api/upload';
+// 使用相对路径，通过代理访问后端API
+const API_BASE_URL = '/api';
+const CLOUD_FUNCTION_URL = '/api/fn';
+const UPLOAD_URL = '/api/upload';
 
 // API端点定义
 export const API_ENDPOINTS = {
@@ -39,35 +40,6 @@ export const API_ENDPOINTS = {
   },
 
   // 博客相关
-  BLOG: {
-    LIST: `${API_BASE_URL}/blogs`,
-    CREATE: `${API_BASE_URL}/blogs`,
-    DETAIL: `${API_BASE_URL}/blogs`,
-    BY_SLUG: `${API_BASE_URL}/blogs/slug`,
-    UPDATE: `${API_BASE_URL}/blogs`,
-    DELETE: `${API_BASE_URL}/blogs`,
-    BULK_DELETE: `${API_BASE_URL}/blogs/bulk-delete`,
-    PUBLISH: `${API_BASE_URL}/blogs`,
-    UNPUBLISH: `${API_BASE_URL}/blogs`,
-    LIKE: `${API_BASE_URL}/blogs`,
-    FAVORITE: `${API_BASE_URL}/blogs`,
-    VIEW: `${API_BASE_URL}/blogs`,
-    SEARCH: `${API_BASE_URL}/blogs/search`,
-    SEARCH_SUGGESTIONS: `${API_BASE_URL}/blogs/search/suggestions`,
-    CATEGORIES: `${API_BASE_URL}/blogs/categories`,
-    TAGS: `${API_BASE_URL}/blogs/tags`,
-    COMMENTS: `${API_BASE_URL}/blogs/comments`,
-    DRAFTS: `${API_BASE_URL}/blogs/drafts`,
-    VERSIONS: `${API_BASE_URL}/blogs/versions`,
-    STATS: `${API_BASE_URL}/blogs/stats`,
-    HOT: `${API_BASE_URL}/blogs/hot`,
-    RECOMMENDED: `${API_BASE_URL}/blogs/recommended`,
-    LATEST: `${API_BASE_URL}/blogs/latest`,
-    EXPORT: `${API_BASE_URL}/blogs/export`,
-    IMPORT: `${API_BASE_URL}/blogs/import`,
-  },
-
-  // 文章相关（兼容性保留）
   POSTS: {
     LIST: `${API_BASE_URL}/posts`,
     CREATE: `${API_BASE_URL}/posts`,
@@ -81,6 +53,26 @@ export const API_ENDPOINTS = {
     SEARCH: `${API_BASE_URL}/posts/search`,
     STATS: `${API_BASE_URL}/posts/stats`,
     BATCH: `${API_BASE_URL}/posts/batch`,
+  },
+
+  // 博客相关 (别名，与 blogAPI 服务保持一致)
+  BLOG: {
+    LIST: `${API_BASE_URL}/posts`,
+    CREATE: `${API_BASE_URL}/posts`,
+    DETAIL: `${API_BASE_URL}/posts`,
+    UPDATE: `${API_BASE_URL}/posts`,
+    DELETE: `${API_BASE_URL}/posts`,
+    PUBLISH: `${API_BASE_URL}/posts`,
+    UNPUBLISH: `${API_BASE_URL}/posts`,
+    LIKE: `${API_BASE_URL}/posts`,
+    FAVORITE: `${API_BASE_URL}/posts`,
+    VIEW: `${API_BASE_URL}/posts`,
+    SEARCH: `${API_BASE_URL}/posts/search`,
+    SEARCH_SUGGESTIONS: `${API_BASE_URL}/posts/search/suggestions`,
+    BY_SLUG: `${API_BASE_URL}/posts/slug`,
+    BULK_DELETE: `${API_BASE_URL}/posts/batch-delete`,
+    CATEGORIES: `${API_BASE_URL}/categories`,
+    TAGS: `${API_BASE_URL}/tags`,
   },
 
   // 分类相关

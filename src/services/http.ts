@@ -81,7 +81,7 @@ class HttpClient {
 
   constructor() {
     this.instance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+      baseURL: '/api',
       timeout: REQUEST_TIMEOUT.DEFAULT,
       headers: {
         'Content-Type': 'application/json',
