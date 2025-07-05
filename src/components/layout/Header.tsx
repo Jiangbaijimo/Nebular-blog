@@ -57,6 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // 获取分类树数据
   useEffect(() => {
@@ -83,6 +84,15 @@ export const Header: React.FC<HeaderProps> = ({
     fetchCategories();
   }, []);
 
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (hoverTimeout) {
+        clearTimeout(hoverTimeout);
+      }
+    };
+  }, [hoverTimeout]);
+
   // 根据slug获取分类及其子分类
   const getCategoryBySlug = (slug: string) => {
     return categories.find(cat => cat.slug === slug);
@@ -100,11 +110,20 @@ export const Header: React.FC<HeaderProps> = ({
 
   // 处理鼠标悬停
   const handleMouseEnter = (slug: string) => {
+    // 清除之前的延迟隐藏
+    if (hoverTimeout) {
+      clearTimeout(hoverTimeout);
+      setHoverTimeout(null);
+    }
     setActiveDropdown(slug);
   };
 
   const handleMouseLeave = () => {
-    setActiveDropdown(null);
+    // 延迟隐藏下拉菜单，给用户时间移动到菜单上
+    const timeout = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 300); // 300ms延迟
+    setHoverTimeout(timeout);
   };
 
   // 导航菜单项（保留原有的写作功能）
@@ -253,7 +272,11 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* 下拉菜单 */}
                     {hasChildren && activeDropdown === item.slug && (
-                      <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                      <div 
+                        className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
+                        onMouseEnter={() => handleMouseEnter(item.slug)}
+                        onMouseLeave={handleMouseLeave}
+                      >
                         <div className="max-h-96 overflow-y-auto">
                           {category.children.map((child: any) => (
                             <button
