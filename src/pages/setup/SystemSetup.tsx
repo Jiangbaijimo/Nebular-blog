@@ -82,7 +82,8 @@ const SystemSetup: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: keyof SetupFormData) => (value: string) => {
+  const handleInputChange = (field: keyof SetupFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
     // 清除对应字段的错误
     if (errors[field]) {
