@@ -35,7 +35,7 @@ const Register: React.FC = () => {
     const checkAuth = async () => {
       const isAuthenticated = await tokenManager.isAuthenticated();
       if (isAuthenticated) {
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     };
     
@@ -158,8 +158,8 @@ const Register: React.FC = () => {
         refreshToken: response.refreshToken,
       });
       
-      // 跳转到仪表板
-      navigate('/dashboard', { replace: true });
+      // 跳转到首页
+      navigate('/', { replace: true });
     } catch (error: any) {
       console.error('Registration failed:', error);
       
@@ -196,8 +196,8 @@ const Register: React.FC = () => {
       const userInfo = await oauthService.authenticate(provider);
       console.log('OAuth registration successful:', userInfo);
       
-      // 跳转到仪表板
-      navigate('/dashboard', { replace: true });
+      // 跳转到首页
+      navigate('/', { replace: true });
     } catch (error: any) {
       console.error(`${provider} registration failed:`, error);
       

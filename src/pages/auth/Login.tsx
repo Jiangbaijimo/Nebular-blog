@@ -28,7 +28,7 @@ const Login: React.FC = () => {
   const [oauthLoading, setOauthLoading] = useState<Record<OAuthProvider, boolean>>({} as any);
   
   // 获取重定向路径
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const from = (location.state as any)?.from?.pathname || '/';
   
   // 检查是否已登录
   useEffect(() => {

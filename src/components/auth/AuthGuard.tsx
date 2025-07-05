@@ -147,8 +147,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
 
   // 不需要认证但已认证（如登录页面）
   if (!requireAuth && authState.isAuthenticated) {
-    // 从state中获取原始目标路径，或默认跳转到仪表板
-    const from = (location.state as any)?.from?.pathname || '/dashboard';
+    // 从state中获取原始目标路径，或默认跳转到首页
+    const from = (location.state as any)?.from?.pathname || '/';
     return <Navigate to={from} replace />;
   }
 
