@@ -1,5 +1,5 @@
 // OAuth认证服务
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/api/shell';
 import { listen } from '@tauri-apps/api/event';
 import tokenManager from './tokenManager';

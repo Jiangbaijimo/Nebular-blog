@@ -1,5 +1,5 @@
 import { sqliteManager, BlogDraft, ImageCache, SyncStatus } from './sqliteManager';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { appDataDir, join } from '@tauri-apps/api/path';
 import { createDir, exists, writeFile, readFile, removeFile } from '@tauri-apps/api/fs';
 import { LRUCache } from 'lru-cache';

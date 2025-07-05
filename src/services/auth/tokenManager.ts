@@ -1,5 +1,5 @@
 // JWT Token管理服务
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { storageUtils } from '../storage/localDB';
 import type { TokenPair, TokenPayload, RefreshTokenResponse } from '../../types/auth';
 

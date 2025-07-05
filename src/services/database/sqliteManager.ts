@@ -1,5 +1,5 @@
 import { Database } from '@tauri-apps/plugin-sql';
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 
 // 数据库表结构接口
 export interface BlogDraft {

@@ -1,11 +1,35 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { lazyRoutes } from './router/lazyRoutes';
+import { MainLayout } from './components/layout/MainLayout';
+import NotFound from './pages/error/NotFound';
 import "./App.css";
 
 function App() {
   return (
-    <div className="app">
-      <h1>高性能博客系统</h1>
-      <p>基于Tauri的本地优先博客系统</p>
-    </div>
+    <Router>
+      <MainLayout>
+        <Routes>
+          {lazyRoutes.map((route, index) => (
+            <Route
+              key={index}
+              path={route.path}
+              element={route.element}
+            >
+              {route.children?.map((childRoute, childIndex) => (
+                <Route
+                  key={childIndex}
+                  index={childRoute.index}
+                  path={childRoute.path}
+                  element={childRoute.element}
+                />
+              ))}
+            </Route>
+          ))}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </MainLayout>
+    </Router>
   );
 }
 

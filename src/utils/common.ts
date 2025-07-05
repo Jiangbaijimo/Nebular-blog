@@ -1,4 +1,15 @@
 // 通用工具函数
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * 合并className的工具函数
+ * @param inputs className值
+ * @returns 合并后的className字符串
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 /**
  * 延迟执行函数

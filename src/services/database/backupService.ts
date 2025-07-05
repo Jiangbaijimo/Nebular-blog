@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri';
+import { invoke } from '@tauri-apps/api/core';
 import { appDataDir, join, downloadDir, documentDir } from '@tauri-apps/api/path';
 import { createDir, exists, writeFile, readFile, removeFile, readDir } from '@tauri-apps/api/fs';
 import { save, open } from '@tauri-apps/api/dialog';
