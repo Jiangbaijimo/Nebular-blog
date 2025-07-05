@@ -41,7 +41,7 @@ export const API_ENDPOINTS = {
 
   // 博客相关
   POSTS: {
-    LIST: `${API_BASE_URL}/posts`,
+    LIST: `${API_BASE_URL}/blogs`,
     CREATE: `${API_BASE_URL}/posts`,
     DETAIL: (id: string) => `${API_BASE_URL}/posts/${id}`,
     UPDATE: (id: string) => `${API_BASE_URL}/posts/${id}`,
@@ -57,7 +57,7 @@ export const API_ENDPOINTS = {
 
   // 博客相关 (别名，与 blogAPI 服务保持一致)
   BLOG: {
-    LIST: `${API_BASE_URL}/posts`,
+    LIST: `${API_BASE_URL}/blogs`,
     CREATE: `${API_BASE_URL}/posts`,
     DETAIL: `${API_BASE_URL}/posts`,
     UPDATE: `${API_BASE_URL}/posts`,

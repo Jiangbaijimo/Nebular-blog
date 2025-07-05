@@ -108,7 +108,8 @@ export default defineConfig(async () => ({
         target: 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
+        // 不重写路径，直接转发
+        // rewrite: (path) => path.replace(/^/api/, '/api')
       }
     },
     watch: {

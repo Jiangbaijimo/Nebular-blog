@@ -1,5 +1,5 @@
 // 本地SQLite数据库服务
-import { Database } from '@tauri-apps/plugin-sql';
+import Database from '@tauri-apps/plugin-sql';
 import type {
   Blog,
   BlogCreateRequest,

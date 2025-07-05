@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Github, Twitter, Linkedin, MapPin, Calendar, ArrowDown } from 'lucide-react';
 import { blogAPI } from '../../services/api';
 import { cloudFunctionThemeAPI, type ThemeConfig } from '../../services/api/cloudFunctionTheme';
+import { offlineCacheService } from '../../services/offline/offlineCacheService';
 import { formatDate } from '../../utils/dateUtils';
 import type { BlogPost } from '../../types/blog';
 
@@ -18,20 +19,17 @@ const HomePage: React.FC = () => {
       try {
         setLoading(true);
         
-        // 并行获取主题配置和博客数据
-        const [themeConfigData, blogsResponse] = await Promise.all([
-          cloudFunctionThemeAPI.getShiroThemeConfig(),
-          blogAPI.getBlogs({
-            page: 1,
-            limit: 3,
-            status: 'published',
-            sortBy: 'createdAt',
-            sortOrder: 'desc'
-          })
-        ]);
+        // 初始化离线缓存服务
+        await offlineCacheService.initialize();
+        
+        // 并行获取主题配置和博客数据（使用缓存）
+         const [themeConfigData, blogsData] = await Promise.all([
+           offlineCacheService.getThemeConfigWithCache(),
+           offlineCacheService.getBlogsWithCache()
+         ]);
         
         setThemeConfig(themeConfigData);
-        setRecentPosts(blogsResponse.data || []);
+        setRecentPosts(blogsData.slice(0, 3) || []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch data:', err);
