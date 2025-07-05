@@ -13,27 +13,47 @@ const HomePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 检查是否在Tauri环境中
+  const isTauriApp = (): boolean => {
+    return typeof window !== 'undefined' && '__TAURI__' in window;
+  };
+
   // 获取主题配置和最新文章
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // 初始化离线缓存服务
-        await offlineCacheService.initialize();
+        if (isTauriApp()) {
+          // App端：使用缓存机制
+          await offlineCacheService.initialize();
+          
+          const [themeConfigData, blogsData] = await Promise.all([
+            offlineCacheService.getThemeConfigWithCache(),
+            offlineCacheService.getBlogsWithCache()
+          ]);
+          
+          setThemeConfig(themeConfigData);
+          setRecentPosts(blogsData.slice(0, 3) || []);
+        } else {
+          // 网页端：直接调用API
+          const [themeConfigData, blogsResponse] = await Promise.all([
+            cloudFunctionThemeAPI.getShiroThemeConfig(),
+            blogAPI.getBlogs({ limit: 3 })
+          ]);
+          
+          setThemeConfig(themeConfigData);
+          setRecentPosts(blogsResponse.data || []);
+        }
         
-        // 并行获取主题配置和博客数据（使用缓存）
-         const [themeConfigData, blogsData] = await Promise.all([
-           offlineCacheService.getThemeConfigWithCache(),
-           offlineCacheService.getBlogsWithCache()
-         ]);
-        
-        setThemeConfig(themeConfigData);
-        setRecentPosts(blogsData.slice(0, 3) || []);
         setError(null);
       } catch (err) {
         console.error('Failed to fetch data:', err);
-        setError('获取数据失败');
+        if (isTauriApp()) {
+          setError('获取数据失败');
+        } else {
+          setError('接口错误');
+        }
       } finally {
         setLoading(false);
       }
