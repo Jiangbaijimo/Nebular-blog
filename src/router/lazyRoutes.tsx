@@ -18,6 +18,10 @@ const BlogEditor = React.lazy(() => import('../pages/blog/BlogEditor'));
 // 认证页面
 const Login = React.lazy(() => import('../pages/auth/Login'));
 const Register = React.lazy(() => import('../pages/auth/Register'));
+const SimpleLogin = React.lazy(() => import('../pages/auth/SimpleLogin'));
+
+// 系统设置页面
+const SystemSetup = React.lazy(() => import('../pages/setup/SystemSetup'));
 
 // 管理后台页面
 const AdminLayout = React.lazy(() => import('../pages/admin/AdminLayout'));
@@ -129,6 +133,22 @@ export const lazyRoutes: RouteObject[] = [
     element: (
       <LazyWrapper>
         <Register />
+      </LazyWrapper>
+    ),
+  },
+  {
+    path: '/auth/simple-login',
+    element: (
+      <LazyWrapper>
+        <SimpleLogin />
+      </LazyWrapper>
+    ),
+  },
+  {
+    path: '/setup',
+    element: (
+      <LazyWrapper>
+        <SystemSetup />
       </LazyWrapper>
     ),
   },

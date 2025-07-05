@@ -442,6 +442,19 @@ export const validators = {
   },
 };
 
+// 导出常用验证函数
+export const validateEmail = (email: string): boolean => {
+  return validators.isEmail(email);
+};
+
+export const validatePassword = (password: string): boolean => {
+  return validators.isStrongPassword(password);
+};
+
+export const validateUsername = (username: string): boolean => {
+  return validators.isValidUsername(username);
+};
+
 /**
  * 创建验证器类
  */

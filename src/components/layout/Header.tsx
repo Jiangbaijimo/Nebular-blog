@@ -444,19 +444,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
               </>
             ) : (
-              /* 未登录状态 */
-              <div className="flex items-center space-x-2">
+              /* 未登录状态 - 统一登录入口 */
+              <div className="flex items-center">
                 <Link
-                  to="/auth/login"
-                  className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  to="/auth/simple-login"
+                  className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                  title="登录"
                 >
-                  登录
-                </Link>
-                <Link
-                  to="/auth/register"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
-                >
-                  注册
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="hidden md:block">登录</span>
                 </Link>
               </div>
             )}

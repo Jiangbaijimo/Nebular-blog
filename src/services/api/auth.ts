@@ -326,6 +326,53 @@ class AuthAPI {
   clearAuth(): void {
     TokenManager.clearTokens();
   }
+
+  /**
+   * 检查系统初始化状态
+   */
+  async checkInitialization(): Promise<{
+    isInitialized: boolean;
+    requiresSetup: boolean;
+    allowRegistration: boolean;
+    adminUserExists: boolean;
+    userCount: number;
+  }> {
+    const response = await httpClient.get<{
+      success: boolean;
+      data: {
+        isInitialized: boolean;
+        requiresSetup: boolean;
+        allowRegistration: boolean;
+        adminUserExists: boolean;
+        userCount: number;
+      };
+      message: string;
+      timestamp: string;
+    }>(
+      API_ENDPOINTS.AUTH.CHECK_INITIALIZATION,
+      { skipAuth: true }
+    );
+    return response.data;
+  }
+
+  /**
+   * 邮箱快速注册（仅需邮箱）
+   */
+  async quickRegisterByEmail(email: string): Promise<RegisterResponse> {
+    const response = await httpClient.post<RegisterResponse>(
+      API_ENDPOINTS.AUTH.REGISTER,
+      { email },
+      { skipAuth: true }
+    );
+
+    // 如果注册后自动登录，保存token
+    if (response.accessToken) {
+      TokenManager.setAccessToken(response.accessToken, response.expiresIn);
+      TokenManager.setRefreshToken(response.refreshToken);
+    }
+
+    return response;
+  }
 }
 
 // 创建认证API实例

@@ -393,5 +393,10 @@ export const TableLoading: React.FC<TableLoadingProps> = ({
   );
 };
 
+// LoadingSpinner 别名组件
+export const LoadingSpinner: React.FC<LoadingProps> = (props) => {
+  return <Loading {...props} />;
+};
+
 export { Loading };
 export default Loading;

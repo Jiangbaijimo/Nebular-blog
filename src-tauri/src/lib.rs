@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
-use tauri::{command, State, Manager, Emitter};
+use tauri::{command, State, Emitter};
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use serde_json::json;
-use urlencoding::decode;
+use urlencoding;
 
 // OAuth 服务器状态
 type OAuthServerState = Arc<Mutex<HashMap<u16, tokio::task::JoinHandle<()>>>>;
