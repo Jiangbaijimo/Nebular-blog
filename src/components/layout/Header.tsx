@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Menu, 
@@ -43,10 +43,72 @@ export const Header: React.FC<HeaderProps> = ({
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
 
-  // 导航菜单项
+  // 主导航分类
+  const mainNavItems = [
+    { name: '首页', slug: 'home', icon: '🏠' },
+    { name: '文稿', slug: 'posts', icon: '📝' },
+    { name: '手记', slug: 'notes', icon: '📚' },
+    { name: '时光', slug: 'timeline', icon: '⏰' },
+    { name: '思考', slug: 'thinking', icon: '💭' },
+    { name: '更多', slug: 'more', icon: '📦' },
+  ];
+
+  // 分类数据状态
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // 获取分类树数据
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const response = await fetch('/api/categories/tree', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+          setCategories(result.data.data || []);
+        }
+      } catch (error) {
+        console.error('获取分类失败:', error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  // 根据slug获取分类及其子分类
+  const getCategoryBySlug = (slug: string) => {
+    return categories.find(cat => cat.slug === slug);
+  };
+
+  // 处理分类点击
+  const handleCategoryClick = (categoryId: string, slug: string) => {
+    if (slug === 'home') {
+      navigate('/');
+    } else {
+      navigate(`/blog?categoryId=${categoryId}`);
+    }
+    setActiveDropdown(null);
+  };
+
+  // 处理鼠标悬停
+  const handleMouseEnter = (slug: string) => {
+    setActiveDropdown(slug);
+  };
+
+  const handleMouseLeave = () => {
+    setActiveDropdown(null);
+  };
+
+  // 导航菜单项（保留原有的写作功能）
   const navItems = [
-    { path: '/', label: '首页', icon: Home },
-    { path: '/blog', label: '博客', icon: BookOpen },
     { path: '/editor', label: '写作', icon: Edit, requireAuth: true },
   ];
 
@@ -161,6 +223,63 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* 主导航（桌面端） */}
             <nav className="hidden md:flex space-x-6">
+              {mainNavItems.map((item) => {
+                const category = getCategoryBySlug(item.slug);
+                const hasChildren = category && category.children && category.children.length > 0;
+                
+                return (
+                  <div
+                    key={item.slug}
+                    className="relative"
+                    onMouseEnter={() => hasChildren && handleMouseEnter(item.slug)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <button
+                      onClick={() => handleCategoryClick(category?.id || '', item.slug)}
+                      className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeDropdown === item.slug
+                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                          : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <span className="text-base">{item.icon}</span>
+                      <span>{item.name}</span>
+                      {hasChildren && (
+                        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* 下拉菜单 */}
+                    {hasChildren && activeDropdown === item.slug && (
+                      <div className="absolute top-full left-0 mt-1 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                        <div className="max-h-96 overflow-y-auto">
+                          {category.children.map((child: any) => (
+                            <button
+                              key={child.id}
+                              onClick={() => handleCategoryClick(child.id, child.slug)}
+                              className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                            >
+                              {child.icon && <span className="text-base">{child.icon}</span>}
+                              <div>
+                                <div className="font-medium">{child.name}</div>
+                                {child.description && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {child.description}
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* 写作功能（需要登录） */}
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const shouldShow = !item.requireAuth || isAuthenticated;
@@ -326,6 +445,41 @@ export const Header: React.FC<HeaderProps> = ({
       {showMenuButton && (
         <div className="md:hidden border-t border-gray-200 dark:border-gray-700">
           <nav className="px-4 py-2 space-y-1">
+            {/* 主导航分类（移动端） */}
+            {mainNavItems.map((item) => {
+              const category = getCategoryBySlug(item.slug);
+              const hasChildren = category && category.children && category.children.length > 0;
+              
+              return (
+                <div key={item.slug} className="space-y-1">
+                  <button
+                    onClick={() => handleCategoryClick(category?.id || '', item.slug)}
+                    className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="text-base">{item.icon}</span>
+                    <span>{item.name}</span>
+                  </button>
+                  
+                  {/* 子分类（移动端展开显示） */}
+                  {hasChildren && (
+                    <div className="ml-6 space-y-1">
+                      {category.children.map((child: any) => (
+                        <button
+                          key={child.id}
+                          onClick={() => handleCategoryClick(child.id, child.slug)}
+                          className="flex items-center space-x-2 w-full px-3 py-2 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          {child.icon && <span>{child.icon}</span>}
+                          <span>{child.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* 写作功能（移动端） */}
             {navItems.map((item) => {
               const Icon = item.icon;
               const shouldShow = !item.requireAuth || isAuthenticated;

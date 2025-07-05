@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Github, Twitter, Linkedin, MapPin, Calendar, ArrowDown } from 'lucide-react';
-import { blogAPI } from '../../services/api';
-import { cloudFunctionThemeAPI, type ThemeConfig } from '../../services/api/cloudFunctionTheme';
+import { type ThemeConfig } from '../../services/api/cloudFunctionTheme';
 import { offlineCacheService } from '../../services/offline/offlineCacheService';
-import { formatDate } from '../../utils/dateUtils';
-import type { BlogPost } from '../../types/blog';
 
 const HomePage: React.FC = () => {
-  const [recentPosts, setRecentPosts] = useState<BlogPost[]>([]);
   const [themeConfig, setThemeConfig] = useState<ThemeConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +14,7 @@ const HomePage: React.FC = () => {
     return typeof window !== 'undefined' && '__TAURI__' in window;
   };
 
-  // 获取主题配置和最新文章
+  // 获取首页配置（使用云函数）
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -27,33 +23,51 @@ const HomePage: React.FC = () => {
         if (isTauriApp()) {
           // App端：使用缓存机制
           await offlineCacheService.initialize();
-          
-          const [themeConfigData, blogsData] = await Promise.all([
-            offlineCacheService.getThemeConfigWithCache(),
-            offlineCacheService.getBlogsWithCache()
-          ]);
-          
+          const themeConfigData = await offlineCacheService.getThemeConfigWithCache();
           setThemeConfig(themeConfigData);
-          setRecentPosts(blogsData.slice(0, 3) || []);
         } else {
-          // 网页端：直接调用API
-          const [themeConfigData, blogsResponse] = await Promise.all([
-            cloudFunctionThemeAPI.getShiroThemeConfig(),
-            blogAPI.getBlogs({ limit: 3 })
-          ]);
+          // 网页端：使用云函数API获取Shiro主题配置
+          const response = await fetch('/api/fn/shiro/config', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
           
-          setThemeConfig(themeConfigData);
-          setRecentPosts(blogsResponse.data || []);
+          const result = await response.json();
+          if (result.success && result.data.success) {
+            setThemeConfig(result.data.data);
+          } else {
+            throw new Error('获取主题配置失败');
+          }
         }
         
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
-        if (isTauriApp()) {
-          setError('获取数据失败');
-        } else {
-          setError('接口错误');
-        }
+        console.error('Failed to fetch theme config:', err);
+        setError('获取主题配置失败');
+        // 设置默认配置
+        setThemeConfig({
+          config: {
+            hero: {
+              title: {
+                template: [
+                  { type: 'h1', text: 'Hi, I\'m ', class: 'font-light text-4xl' },
+                  { type: 'h1', text: 'Admin', class: 'font-medium mx-2 text-4xl' },
+                  { type: 'h1', text: '👋。', class: 'font-light text-4xl' }
+                ]
+              },
+              description: '欢迎来到我的博客系统！'
+            }
+          },
+          footer: {
+            linkSections: [],
+            otherInfo: {
+              date: '2024',
+              icp: { text: '', link: '' }
+            }
+          }
+        });
       } finally {
         setLoading(false);
       }
@@ -225,102 +239,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Recent Posts Preview */}
-      <section className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              最新文章
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              分享我的技术心得和开发经验
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading ? (
-              // 加载状态
-              [1, 2, 3].map((i) => (
-                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200 dark:bg-gray-700"></div>
-                  <div className="p-6">
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-                    <div className="flex justify-between">
-                      <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : error ? (
-              // 错误状态
-              <div className="col-span-full text-center py-12">
-                <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  重试
-                </button>
-              </div>
-            ) : recentPosts.length > 0 ? (
-              // 有数据时显示真实文章
-              recentPosts.map((post) => (
-                <article key={post.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
-                  <div className="h-48 bg-gradient-to-br from-blue-400 to-purple-500 relative overflow-hidden">
-                    {post.coverImage ? (
-                      <img 
-                        src={post.coverImage} 
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                        <span className="text-white text-2xl font-bold">{post.title.charAt(0)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                      {post.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-3">
-                      {post.excerpt || post.summary || '暂无摘要'}
-                    </p>
-                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                      <span>{formatDate(post.createdAt)}</span>
-                      <Link to={`/blog/${post.slug || post.id}`} className="text-blue-600 hover:text-blue-700">
-                        阅读更多
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))
-            ) : (
-              // 无数据状态
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">暂无文章</p>
-                <Link 
-                  to="/admin/posts/new"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  写第一篇文章
-                </Link>
-              </div>
-            )}
-          </div>
-          
-          <div className="text-center mt-12">
-            <Link
-              to="/blog"
-              className="inline-flex items-center px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors font-medium"
-            >
-              查看所有文章
-            </Link>
-          </div>
-        </div>
-      </section>
+
 
       {/* Footer */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
