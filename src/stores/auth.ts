@@ -323,10 +323,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             try {
               const tokens = get().tokens;
               if (tokens) {
-                // 通知服务器登出
-                await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {
-                  refreshToken: tokens.refreshToken
-                });
+                // 通知服务器登出 - 使用空的请求体，依赖Authorization头中的Bearer token
+                await httpClient.post(API_ENDPOINTS.AUTH.LOGOUT, {});
               }
             } catch (error) {
               console.warn('Logout request failed:', error);
@@ -344,7 +342,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               });
 
               // 清除HTTP客户端的token
-              httpClient.setAuthTokens({ accessToken: '', refreshToken: '', expiresAt: 0 });
+              httpClient.clearAuthTokens();
 
               // 触发登出事件
               window.dispatchEvent(new CustomEvent('auth-logout'));
