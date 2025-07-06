@@ -23,7 +23,7 @@ export interface OAuthCallbackState {
  */
 export function useOAuthState() {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { setAuthData } = useAuthStore();
   const [state, setState] = useState<OAuthState>({
     isLoading: false,
     error: null,
@@ -106,14 +106,22 @@ export function useOAuthState() {
       // 处理 OAuth 回调
       const response = await oauthService.handleWebAppCallback();
       
-      // 更新全局认证状态
-      login(response.user, response.accessToken);
-      
-      return {
-        status: 'success',
-        message: '登录成功，正在跳转...',
-        countdown: 2,
-      };
+      if (response.success && response.data) {
+        // 更新全局认证状态
+        setAuthData(response.data);
+        
+        return {
+          status: 'success',
+          message: '登录成功，正在跳转...',
+          countdown: 2,
+        };
+      } else {
+        return {
+          status: 'error',
+          message: response.message || '认证失败，请重试',
+          countdown: 5,
+        };
+      }
     } catch (error: any) {
       console.error('OAuth 回调处理失败:', error);
       
@@ -125,7 +133,7 @@ export function useOAuthState() {
         countdown: 5,
       };
     }
-  }, [login]);
+  }, [setAuthData]);
 
   /**
    * 清除错误状态

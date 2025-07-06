@@ -54,6 +54,7 @@ export interface AuthState {
 export interface AuthActions {
   // 初始化
   initialize: () => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
   
   // 登录/登出
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
@@ -96,6 +97,9 @@ export interface AuthActions {
   
   // 重置状态
   reset: () => void;
+
+  // OAuth 专用
+  setAuthData: (data: { user: User; tokens: AuthTokens; session: UserSession }) => void;
 }
 
 
@@ -172,6 +176,33 @@ export const useAuthStore = create<AuthState & AuthActions>()
       subscribeWithSelector(
         immer((set, get) => ({
           ...initialAuthState,
+
+          // 检查认证状态
+          checkAuthStatus: async () => {
+            try {
+              const tokens = get().tokens;
+              if (tokens && isTokenValid(tokens.accessToken, tokens.expiresAt)) {
+                // Token有效，获取用户信息
+                await get().refreshUserInfo();
+              } else if (tokens?.refreshToken) {
+                // 尝试刷新token
+                try {
+                  await get().refreshTokens();
+                  await get().refreshUserInfo();
+                } catch (error) {
+                  // 刷新失败，清除token
+                  get().logout();
+                }
+              }
+            } catch (error) {
+              console.error('检查认证状态时出错:', error);
+              // 即使检查失败，也标记为已初始化，以避免应用卡在加载状态
+            } finally {
+              set((state) => {
+                state.isInitialized = true;
+              });
+            }
+          },
 
           // 初始化
           initialize: async () => {
@@ -722,6 +753,18 @@ export const useAuthStore = create<AuthState & AuthActions>()
           // 重置状态
           reset: () => {
             set(() => ({ ...initialAuthState }));
+          },
+
+          // OAuth 专用
+          setAuthData: (data: { user: User; tokens: AuthTokens; session: UserSession }) => {
+            set((state) => {
+              state.user = data.user;
+              state.tokens = data.tokens;
+              state.session = data.session;
+              state.isAuthenticated = true;
+              state.error = null;
+              state.isLoading = false;
+            });
           }
         }))
       ),

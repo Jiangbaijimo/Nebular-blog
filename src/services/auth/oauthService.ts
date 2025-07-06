@@ -108,7 +108,7 @@ class OAuthService {
   /**
    * 处理Web环境的OAuth回调
    */
-  async handleWebAppCallback(): Promise<OAuthResponse> {
+  async handleWebAppCallback(): Promise<ApiResponse<LoginResponse>> {
     const envConfig = getCurrentEnvConfig();
     
     // 验证回调状态
@@ -133,7 +133,14 @@ class OAuthService {
       OAuthStorageManager.clearState();
       OAuthStorageManager.clearProvider();
       
-      return response;
+      return {
+        success: true,
+        data: {
+          user: response.user,
+          tokens: response.tokens,
+          session: response.session,
+        },
+      };
     } catch (error: any) {
       if (envConfig.enableDebugLogs) {
         console.error('Token交换失败:', error);
