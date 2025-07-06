@@ -39,11 +39,9 @@ class OAuthService {
   }
 
   private getRedirectUri(provider: OAuthProvider): string {
-    if (IS_TAURI) {
-      return `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/${provider}`;
-    }
-    // Web环境，回调到应用内的一个路由
-    return `${window.location.origin}/auth/callback/${provider}`;
+    // 统一使用后端的回调地址，这样与GitHub OAuth App配置保持一致
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+    return `${baseUrl}/auth/${provider}/callback`;
   }
 
   private initializeConfigs(): void {
