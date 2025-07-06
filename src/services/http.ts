@@ -34,17 +34,73 @@ class TokenManager {
   private static readonly TOKEN_EXPIRES_KEY = 'token_expires';
 
   static getAccessToken(): string | null {
-    return getStorageItem(this.ACCESS_TOKEN_KEY);
+    // 首先尝试使用getStorageItem（标准方式）
+    let token = getStorageItem(this.ACCESS_TOKEN_KEY);
+    
+    // 如果getStorageItem返回null，直接从localStorage读取（兼容性处理）
+    if (!token) {
+      const rawToken = localStorage.getItem(this.ACCESS_TOKEN_KEY);
+      if (rawToken) {
+        // 检查是否是直接存储的JWT token（不是JSON格式）
+        if (rawToken.startsWith('eyJ')) { // JWT token通常以eyJ开头
+          token = rawToken;
+        } else {
+          // 尝试解析JSON格式
+          try {
+            const parsed = JSON.parse(rawToken);
+            token = parsed.value || parsed;
+          } catch {
+            // 如果解析失败，直接使用原始值
+            token = rawToken;
+          }
+        }
+      }
+    }
+    
+    console.log('TokenManager.getAccessToken() called, token:', token ? 'exists' : 'null');
+    console.log('localStorage access_token:', localStorage.getItem('access_token'));
+    return token;
   }
 
   static setAccessToken(token: string, expiresIn: number): void {
+    console.log('TokenManager.setAccessToken called with:', {
+      token: token ? 'exists' : 'null',
+      expiresIn
+    });
     setStorageItem(this.ACCESS_TOKEN_KEY, token);
     const expiresAt = Date.now() + expiresIn * 1000;
     setStorageItem(this.TOKEN_EXPIRES_KEY, expiresAt.toString());
+    
+    // 验证是否正确设置到localStorage
+    console.log('After setStorageItem, localStorage access_token:', localStorage.getItem('access_token'));
+    console.log('After setStorageItem, getStorageItem result:', getStorageItem(this.ACCESS_TOKEN_KEY));
   }
 
   static getRefreshToken(): string | null {
-    return getStorageItem(this.REFRESH_TOKEN_KEY);
+    // 首先尝试使用getStorageItem（标准方式）
+    let token = getStorageItem(this.REFRESH_TOKEN_KEY);
+    
+    // 如果getStorageItem返回null，直接从localStorage读取（兼容性处理）
+    if (!token) {
+      const rawToken = localStorage.getItem(this.REFRESH_TOKEN_KEY);
+      if (rawToken) {
+        // 检查是否是直接存储的JWT token（不是JSON格式）
+        if (rawToken.startsWith('eyJ')) { // JWT token通常以eyJ开头
+          token = rawToken;
+        } else {
+          // 尝试解析JSON格式
+          try {
+            const parsed = JSON.parse(rawToken);
+            token = parsed.value || parsed;
+          } catch {
+            // 如果解析失败，直接使用原始值
+            token = rawToken;
+          }
+        }
+      }
+    }
+    
+    return token;
   }
 
   static setRefreshToken(token: string): void {
@@ -99,8 +155,12 @@ class HttpClient {
         // 添加认证token
         if (!config.skipAuth) {
           const token = TokenManager.getAccessToken();
+          console.log('Request interceptor - token from TokenManager:', token ? 'exists' : 'null');
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('Authorization header set:', config.headers.Authorization);
+          } else {
+            console.log('No token found, Authorization header not set');
           }
         }
 
@@ -365,6 +425,12 @@ class HttpClient {
 
   // 设置认证令牌
   setAuthTokens(tokens: AuthTokens): void {
+    console.log('setAuthTokens called with:', {
+      accessToken: tokens.accessToken ? 'exists' : 'null',
+      refreshToken: tokens.refreshToken ? 'exists' : 'null',
+      expiresAt: tokens.expiresAt
+    });
+    
     if (tokens.accessToken) {
       // 处理过期时间，支持字符串和数字格式
       let expiresAtMs: number;
@@ -376,17 +442,43 @@ class HttpClient {
       
       // 计算剩余过期时间（秒）
       const expiresIn = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+      console.log('Setting access token with expiresIn:', expiresIn);
       TokenManager.setAccessToken(tokens.accessToken, expiresIn);
+      
+      // 验证token是否正确设置
+      const retrievedToken = TokenManager.getAccessToken();
+      console.log('Token verification after setting:', retrievedToken ? 'exists' : 'null');
     }
     
     if (tokens.refreshToken) {
       TokenManager.setRefreshToken(tokens.refreshToken);
     }
+    
+    // 同步到独立的tokenManager
+    import('./auth/tokenManager').then(({ default: tokenManager }) => {
+      tokenManager.setTokens({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      }).catch(error => {
+        console.warn('Failed to sync tokens to tokenManager:', error);
+      });
+    }).catch(error => {
+      console.warn('Failed to import tokenManager:', error);
+    });
   }
 
   // 清除认证令牌
   clearAuthTokens(): void {
     TokenManager.clearTokens();
+    
+    // 同步清除独立的tokenManager
+    import('./auth/tokenManager').then(({ default: tokenManager }) => {
+      tokenManager.clearTokens().catch(error => {
+        console.warn('Failed to clear tokens from tokenManager:', error);
+      });
+    }).catch(error => {
+      console.warn('Failed to import tokenManager:', error);
+    });
   }
 
   // 获取当前访问令牌
