@@ -150,7 +150,8 @@ class AuthAPI {
   }
 
   /**
-   * OAuth登录（Google、GitHub等）
+   * OAuth登录（Google、GitHub等）- 已废弃，保留兼容性
+   * @deprecated 使用 exchangeCodeForToken 替代
    */
   async oauthLogin(request: OAuthLoginRequest): Promise<LoginResponse> {
     const response = await httpClient.post<LoginResponse>(
@@ -169,13 +170,34 @@ class AuthAPI {
   }
 
   /**
-   * 获取OAuth授权URL
+   * 获取OAuth授权URL - 已废弃，保留兼容性
+   * @deprecated 直接使用后端OAuth入口端点
    */
   async getOAuthUrl(provider: 'google' | 'github'): Promise<{ url: string }> {
     return httpClient.get<{ url: string }>(
       `${API_ENDPOINTS.AUTH.OAUTH_URL}/${provider}`,
       { skipAuth: true }
     );
+  }
+
+  /**
+   * 使用临时授权码交换真实token
+   * 这是新的OAuth流程的核心方法
+   */
+  async exchangeCodeForToken(code: string): Promise<LoginResponse> {
+    const response = await httpClient.post<LoginResponse>(
+      API_ENDPOINTS.AUTH.EXCHANGE_CODE,
+      { code },
+      { skipAuth: true }
+    );
+
+    // 保存token
+    if (response.accessToken) {
+      TokenManager.setAccessToken(response.accessToken, response.expiresIn);
+      TokenManager.setRefreshToken(response.refreshToken);
+    }
+
+    return response;
   }
 
   /**

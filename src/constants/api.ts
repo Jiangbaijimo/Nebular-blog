@@ -23,10 +23,15 @@ export const API_ENDPOINTS = {
     CHANGE_PASSWORD: `${API_BASE_URL}/auth/change-password`,
     VERIFY_EMAIL: `${API_BASE_URL}/auth/verify-email`,
     RESEND_VERIFICATION: `${API_BASE_URL}/auth/resend-verification`,
-    OAUTH_LOGIN: `${API_BASE_URL}/auth/oauth/login`,
-    OAUTH_URL: `${API_BASE_URL}/auth/oauth/url`,
-    GOOGLE_LOGIN: `${API_BASE_URL}/auth/google`,
-    GITHUB_LOGIN: `${API_BASE_URL}/auth/github`,
+    
+    // OAuth 相关端点
+    OAUTH_LOGIN: `${API_BASE_URL}/auth/oauth/login`, // 已废弃，保留兼容性
+    OAUTH_URL: `${API_BASE_URL}/auth/oauth/url`, // 已废弃，保留兼容性
+    EXCHANGE_CODE: `${API_BASE_URL}/auth/exchange-code`, // 新增：交换临时授权码
+    GOOGLE_LOGIN: `${API_BASE_URL}/auth/google`, // OAuth入口
+    GITHUB_LOGIN: `${API_BASE_URL}/auth/github`, // OAuth入口
+    MICROSOFT_LOGIN: `${API_BASE_URL}/auth/microsoft`, // OAuth入口
+    
     ME: `${API_BASE_URL}/auth/me`,
     PROFILE: `${API_BASE_URL}/auth/profile`,
     PREFERENCES: `${API_BASE_URL}/auth/preferences`,

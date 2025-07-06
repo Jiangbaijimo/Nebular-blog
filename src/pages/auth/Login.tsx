@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome, User } from 'lucide-react';
 import authAPI from '../../services/api/auth';
-import oauthService from '../../services/auth/oauthService';
+import { oauthService } from '../../services/auth/oauthService';
 import tokenManager from '../../services/auth/tokenManager';
 import { useAuthStore } from '../../stores/auth';
 import type { LoginCredentials, OAuthProvider } from '../../types/auth';
@@ -132,7 +132,7 @@ const Login: React.FC = () => {
    * 处理OAuth登录
    */
   const handleOAuthLogin = async (provider: OAuthProvider) => {
-    if (!oauthService.isProviderConfigured(provider)) {
+    if (!oauthService.isProviderAvailable(provider)) {
       setErrors({ general: `${provider} 登录未配置` });
       return;
     }
@@ -193,7 +193,7 @@ const Login: React.FC = () => {
 
   // 获取可用的OAuth提供商
   const availableProviders = oauthService.getSupportedProviders().filter(
-    provider => oauthService.isProviderConfigured(provider)
+    provider => oauthService.isProviderAvailable(provider)
   );
 
   return (
