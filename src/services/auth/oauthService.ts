@@ -126,7 +126,7 @@ class OAuthService {
       const response = await this.exchangeCodeForToken(validation.code!);
       
       if (envConfig.enableDebugLogs) {
-        console.log('OAuth认证成功:', { user: response.user.username });
+        console.log('OAuth认证成功:', { user: response.user?.username || 'unknown' });
       }
       
       // 清除OAuth相关的本地存储数据
@@ -155,18 +155,26 @@ class OAuthService {
    */
   private async exchangeCodeForToken(code: string): Promise<LoginResponse> {
     try {
-      const response = await httpClient.post<LoginResponse>(
+      const response = await httpClient.post<any>(
         '/api/auth/exchange-code',
         { code },
         { skipAuth: true }
       );
 
+      // 处理嵌套的响应结构: {success: true, data: {success: true, data: {user: {...}}}}
+      const actualData = response.data?.data || response.data || response;
+      
       // 保存token
-      if (response.accessToken) {
-        await tokenManager.setTokens(response.tokens);
+      if (actualData.tokens) {
+        // 将AuthTokens转换为TokenPair格式
+        const tokenPair = {
+          accessToken: actualData.tokens.accessToken,
+          refreshToken: actualData.tokens.refreshToken
+        };
+        await tokenManager.setTokens(tokenPair);
       }
 
-      return response;
+      return actualData;
     } catch (error: any) {
       console.error('授权码交换失败:', error);
       throw new Error(error.response?.data?.message || error.message || '授权码交换失败');

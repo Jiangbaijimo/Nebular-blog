@@ -19,47 +19,9 @@ workLoop @ chunk-NXESFFTV.js?v=7f606430:197
 flushWork @ chunk-NXESFFTV.js?v=7f606430:176
 performWorkUntilDeadline @ chunk-NXESFFTV.js?v=7f606430:384
 OAuthCallback.tsx:26 开始处理 OAuth 回调
-oauthService.ts:139 Token交换失败: TypeError: Cannot read properties of undefined (reading 'username')
-    at OAuthService.handleWebAppCallback (oauthService.ts:129:57)
-    at async useOAuthState.ts:107:24
-    at async processCallback (OAuthCallback.tsx:28:24)
-handleWebAppCallback @ oauthService.ts:139
-await in handleWebAppCallback
-（匿名） @ useOAuthState.ts:107
-processCallback @ OAuthCallback.tsx:28
-（匿名） @ OAuthCallback.tsx:64
-commitHookEffectListMount @ chunk-NXESFFTV.js?v=7f606430:16963
-commitPassiveMountOnFiber @ chunk-NXESFFTV.js?v=7f606430:18206
-commitPassiveMountEffects_complete @ chunk-NXESFFTV.js?v=7f606430:18179
-commitPassiveMountEffects_begin @ chunk-NXESFFTV.js?v=7f606430:18169
-commitPassiveMountEffects @ chunk-NXESFFTV.js?v=7f606430:18159
-flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=7f606430:19543
-flushPassiveEffects @ chunk-NXESFFTV.js?v=7f606430:19500
-（匿名） @ chunk-NXESFFTV.js?v=7f606430:19381
-workLoop @ chunk-NXESFFTV.js?v=7f606430:197
-flushWork @ chunk-NXESFFTV.js?v=7f606430:176
-performWorkUntilDeadline @ chunk-NXESFFTV.js?v=7f606430:384
-oauth.ts:250 OAuth Error: {error: 'exchange_failed', description: "Cannot read properties of undefined (reading 'username')", context: {…}, timestamp: '2025-07-06T12:56:13.850Z', userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', …}
-logError @ oauth.ts:250
-handleWebAppCallback @ oauthService.ts:143
-await in handleWebAppCallback
-（匿名） @ useOAuthState.ts:107
-processCallback @ OAuthCallback.tsx:28
-（匿名） @ OAuthCallback.tsx:64
-commitHookEffectListMount @ chunk-NXESFFTV.js?v=7f606430:16963
-commitPassiveMountOnFiber @ chunk-NXESFFTV.js?v=7f606430:18206
-commitPassiveMountEffects_complete @ chunk-NXESFFTV.js?v=7f606430:18179
-commitPassiveMountEffects_begin @ chunk-NXESFFTV.js?v=7f606430:18169
-commitPassiveMountEffects @ chunk-NXESFFTV.js?v=7f606430:18159
-flushPassiveEffectsImpl @ chunk-NXESFFTV.js?v=7f606430:19543
-flushPassiveEffects @ chunk-NXESFFTV.js?v=7f606430:19500
-（匿名） @ chunk-NXESFFTV.js?v=7f606430:19381
-workLoop @ chunk-NXESFFTV.js?v=7f606430:197
-flushWork @ chunk-NXESFFTV.js?v=7f606430:176
-performWorkUntilDeadline @ chunk-NXESFFTV.js?v=7f606430:384
-useOAuthState.ts:118 OAuth 回调处理失败: Error: Cannot read properties of undefined (reading 'username')
-    at OAuthService.handleWebAppCallback (oauthService.ts:149:13)
-    at async useOAuthState.ts:107:24
+oauthService.ts:129 OAuth认证成功: {user: 'user_cnp7pe'}
+useOAuthState.ts:118 OAuth 回调处理失败: TypeError: login is not a function
+    at useOAuthState.ts:110:7
     at async processCallback (OAuthCallback.tsx:28:24)
 （匿名） @ useOAuthState.ts:118
 await in （匿名）
@@ -76,29 +38,23 @@ flushPassiveEffects @ chunk-NXESFFTV.js?v=7f606430:19500
 workLoop @ chunk-NXESFFTV.js?v=7f606430:197
 flushWork @ chunk-NXESFFTV.js?v=7f606430:176
 performWorkUntilDeadline @ chunk-NXESFFTV.js?v=7f606430:384
-
-$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$session.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
-Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3001/api/auth/exchange-code" `
--Method "POST" `
--WebSession $session `
--Headers @{
-"Accept"="application/json, text/plain, */*"
-  "Accept-Encoding"="gzip, deflate, br, zstd"
-  "Accept-Language"="zh-CN,zh;q=0.9"
-  "Origin"="http://localhost:3001"
-  "Referer"="http://localhost:3001/auth/callback?code=bvsd831hn8wz76joqya9p"
-  "Sec-Fetch-Dest"="empty"
-  "Sec-Fetch-Mode"="cors"
-  "Sec-Fetch-Site"="same-origin"
-  "X-Request-ID"="1751806573820-13qa25lbo"
-  "sec-ch-ua"="`"Not)A;Brand`";v=`"8`", `"Chromium`";v=`"138`", `"Google Chrome`";v=`"138`""
-  "sec-ch-ua-mobile"="?0"
-  "sec-ch-ua-platform"="`"Windows`""
-} `
--ContentType "application/json" `
--Body "{`"code`":`"bvsd831hn8wz76joqya9p`"}"
-{
+curl 'http://localhost:3001/api/auth/exchange-code' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: zh-CN,zh;q=0.9' \
+  -H 'Connection: keep-alive' \
+  -H 'Content-Type: application/json' \
+  -H 'Origin: http://localhost:3001' \
+  -H 'Referer: http://localhost:3001/auth/callback?code=r87c8o23rditn3o5j7dls' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36' \
+  -H 'X-Request-ID: 1751807138754-f0krb6wgg' \
+  -H 'sec-ch-ua: "Not)A;Brand";v="8", "Chromium";v="138", "Google Chrome";v="138"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"' \
+  --data-raw '{"code":"r87c8o23rditn3o5j7dls"}'
+  {
     "success": true,
     "data": {
         "success": true,
@@ -498,15 +454,15 @@ Invoke-WebRequest -UseBasicParsing -Uri "http://localhost:3001/api/auth/exchange
                     }
                 ],
                 "createdAt": "2025-07-05T22:34:42.502Z",
-                "updatedAt": "2025-07-06T12:56:13.000Z"
+                "updatedAt": "2025-07-06T13:05:37.000Z"
             },
-            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE4MDY1NzMsImV4cCI6MTc1MjQxMTM3M30.IoKbCwTX7nty7TBXBJ_B12nYtc59A6yeYdM4R7C6qZQ",
-            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE4MDY1NzMsImV4cCI6MTc1NDM5ODU3M30.YqEejKocQLK3zPiIpCiSj0eZgwD90PN9euEQMAJX3n4",
+            "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE4MDcxMzgsImV4cCI6MTc1MjQxMTkzOH0.GXgd76R86dqBmnurOBQQ8jxLxxFt2o9Mkab1lUh_eug",
+            "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE4MDcxMzgsImV4cCI6MTc1NDM5OTEzOH0.t1CBmhPZmPSNWEBT3IrGNtZgxh6Ttj0KL_Px-H0o8a4",
             "expiresIn": "7d"
         },
         "message": "操作成功",
-        "timestamp": "2025-07-06T12:56:13.844Z"
+        "timestamp": "2025-07-06T13:05:38.776Z"
     },
     "message": "操作成功",
-    "timestamp": "2025-07-06T12:56:13.846Z"
+    "timestamp": "2025-07-06T13:05:38.776Z"
 }

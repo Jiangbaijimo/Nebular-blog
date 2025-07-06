@@ -124,6 +124,12 @@ export interface AuthTokens {
   scope?: string[];
 }
 
+// Token对（用于tokenManager）
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
 // 用户会话
 export interface UserSession {
   id: string;
