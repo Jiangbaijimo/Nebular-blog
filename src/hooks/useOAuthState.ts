@@ -23,7 +23,8 @@ export interface OAuthCallbackState {
  */
 export function useOAuthState() {
   const navigate = useNavigate();
-  const { setAuthData } = useAuthStore();
+  const authStore = useAuthStore();
+  
   const [state, setState] = useState<OAuthState>({
     isLoading: false,
     error: null,
@@ -108,7 +109,7 @@ export function useOAuthState() {
       
       if (response.success && response.data) {
         // 更新全局认证状态
-        setAuthData(response.data);
+        authStore.setAuthData(response.data);
         
         return {
           status: 'success',
@@ -133,7 +134,7 @@ export function useOAuthState() {
         countdown: 5,
       };
     }
-  }, [setAuthData]);
+  }, []);
 
   /**
    * 清除错误状态

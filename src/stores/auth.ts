@@ -170,7 +170,7 @@ const isTokenValid = (token: string, expiry: number): boolean => {
 
 // ==================== 认证Store ====================
 
-export const useAuthStore = create<AuthState & AuthActions>()
+export const useAuthStore = create<AuthState & AuthActions>()(
   devtools(
     persist(
       subscribeWithSelector(
@@ -756,15 +756,33 @@ export const useAuthStore = create<AuthState & AuthActions>()
           },
 
           // OAuth 专用
-          setAuthData: (data: { user: User; tokens: AuthTokens; session: UserSession }) => {
+          setAuthData: (data: { user: User; tokens?: AuthTokens; session?: UserSession }) => {
+            // 只有当tokens存在时才设置HTTP客户端的认证令牌
+            if (data.tokens) {
+              httpClient.setAuthTokens(data.tokens);
+            } else {
+              console.warn('OAuth认证成功但缺少认证令牌，这可能是后端实现的问题');
+              console.warn('用户信息已保存，但认证状态可能不完整');
+            }
+            
             set((state) => {
               state.user = data.user;
-              state.tokens = data.tokens;
-              state.session = data.session;
-              state.isAuthenticated = true;
-              state.error = null;
+              state.tokens = data.tokens || null;
+              state.session = data.session || null;
+              state.isAuthenticated = !!data.user; // 只要有用户信息就认为已认证
+              state.sessionExpiry = data.tokens?.expiresAt || null;
+              state.error = data.tokens ? null : {
+                code: 'INCOMPLETE_AUTH',
+                message: '认证成功但缺少访问令牌，某些功能可能无法使用',
+                timestamp: new Date().toISOString()
+              };
               state.isLoading = false;
             });
+            
+            // 触发登录成功事件
+            window.dispatchEvent(new CustomEvent('auth-login', {
+              detail: { user: data.user }
+            }));
           }
         }))
       ),
@@ -781,7 +799,8 @@ export const useAuthStore = create<AuthState & AuthActions>()
     {
       name: 'auth-store'
     }
-  );
+  )
+);
 
 // ==================== 导出工具函数 ====================
 

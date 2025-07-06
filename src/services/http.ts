@@ -3,6 +3,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } f
 import { API_ENDPOINTS, HTTP_STATUS, REQUEST_TIMEOUT, RETRY_CONFIG } from '../constants/api';
 import { getStorageItem, setStorageItem, removeStorageItem } from '../utils/storage';
 import { APP_CONFIG } from '../constants/app';
+import type { AuthTokens } from '../types/auth';
 
 // 请求配置接口
 interface RequestConfig extends AxiosRequestConfig {
@@ -360,6 +361,37 @@ class HttpClient {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(downloadUrl);
+  }
+
+  // 设置认证令牌
+  setAuthTokens(tokens: AuthTokens): void {
+    if (tokens.accessToken) {
+      // 处理过期时间，支持字符串和数字格式
+      let expiresAtMs: number;
+      if (typeof tokens.expiresAt === 'string') {
+        expiresAtMs = new Date(tokens.expiresAt).getTime();
+      } else {
+        expiresAtMs = tokens.expiresAt * 1000; // 假设数字是秒，转换为毫秒
+      }
+      
+      // 计算剩余过期时间（秒）
+      const expiresIn = Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000));
+      TokenManager.setAccessToken(tokens.accessToken, expiresIn);
+    }
+    
+    if (tokens.refreshToken) {
+      TokenManager.setRefreshToken(tokens.refreshToken);
+    }
+  }
+
+  // 清除认证令牌
+  clearAuthTokens(): void {
+    TokenManager.clearTokens();
+  }
+
+  // 获取当前访问令牌
+  getAccessToken(): string | null {
+    return TokenManager.getAccessToken();
   }
 
   // 获取原始axios实例

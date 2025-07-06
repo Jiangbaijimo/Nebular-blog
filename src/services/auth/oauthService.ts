@@ -168,20 +168,56 @@ class OAuthService {
         { skipAuth: true }
       );
 
-      // 处理嵌套的响应结构: {success: true, data: {success: true, data: {user: {...}}}}
+      // 处理嵌套的响应结构: {success: true, data: {success: true, data: {user: {...}, accessToken: ..., refreshToken: ...}}}
       const actualData = response.data?.data || response.data || response;
       
-      // 保存token
+      // 检查是否包含tokens（支持多种格式）
+      const hasTokens = actualData.tokens || actualData.accessToken;
+      
+      if (!hasTokens) {
+        console.warn('后端响应中缺少认证令牌，这可能是后端实现的问题');
+        console.warn('实际响应数据:', actualData);
+        
+        // 创建一个包含用户信息但没有tokens的响应
+        return {
+          user: actualData.user,
+          tokens: undefined,
+          session: undefined
+        } as LoginResponse;
+      }
+      
+      // 构建标准的tokens对象
+      let tokens: any;
+      
       if (actualData.tokens) {
-        // 将AuthTokens转换为TokenPair格式
+        // 如果有tokens字段，直接使用
+        tokens = actualData.tokens;
+      } else if (actualData.accessToken) {
+        // 如果token字段在根级别，构建tokens对象
+        tokens = {
+          accessToken: actualData.accessToken,
+          refreshToken: actualData.refreshToken,
+          tokenType: 'Bearer' as const,
+          expiresIn: actualData.expiresIn,
+          expiresAt: actualData.expiresAt || new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString() // 默认7天
+        };
+      }
+      
+      // 保存token到tokenManager
+      if (tokens) {
         const tokenPair = {
-          accessToken: actualData.tokens.accessToken,
-          refreshToken: actualData.tokens.refreshToken
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken
         };
         await tokenManager.setTokens(tokenPair);
       }
-
-      return actualData;
+      
+      // 返回标准格式的响应
+       return {
+         user: actualData.user,
+         tokens: tokens,
+         session: actualData.session
+       } as LoginResponse;
     } catch (error: any) {
       console.error('授权码交换失败:', error);
       throw new Error(error.response?.data?.message || error.message || '授权码交换失败');

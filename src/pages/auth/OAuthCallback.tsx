@@ -19,11 +19,18 @@ const OAuthCallback: React.FC = () => {
     countdown: 0,
   });
   const [isProcessing, setIsProcessing] = useState(true);
+  const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
+    // 防止重复处理
+    if (hasProcessed) {
+      return;
+    }
+
     const processCallback = async () => {
       try {
         console.log('开始处理 OAuth 回调');
+        setHasProcessed(true);
         
         const result = await handleCallback();
         setCallbackState(result);
@@ -62,7 +69,8 @@ const OAuthCallback: React.FC = () => {
     };
 
     processCallback();
-  }, [handleCallback, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 倒计时效果
   useEffect(() => {
@@ -97,6 +105,13 @@ const OAuthCallback: React.FC = () => {
   };
 
   const handleRetry = () => {
+    setHasProcessed(false);
+    setIsProcessing(true);
+    setCallbackState({
+      status: 'loading',
+      message: '正在处理认证信息...',
+      countdown: 0,
+    });
     window.location.reload();
   };
 
