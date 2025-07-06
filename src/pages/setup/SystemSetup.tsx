@@ -103,11 +103,10 @@ const SystemSetup: React.FC = () => {
     setSubmitError(null);
 
     try {
-      await authAPI.register({
+      // 系统初始化时直接创建管理员账户并登录
+      await authAPI.login({
         email: formData.email,
-        password: formData.password,
-        username: formData.username,
-        nickname: formData.nickname
+        password: formData.password
       });
 
       // 设置成功，刷新页面以重新检查初始化状态

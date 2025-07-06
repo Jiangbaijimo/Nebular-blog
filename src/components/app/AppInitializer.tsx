@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { authAPI } from '../../services/api/auth';
+import { useAuthStore } from '../../stores/authStore';
 import { LoadingSpinner } from '../ui/Loading';
 import SystemSetup from '../../pages/setup/SystemSetup';
 import { motion } from 'framer-motion';
@@ -23,6 +24,9 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [authInitialized, setAuthInitialized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const { checkAuthStatus } = useAuthStore();
 
   const checkInitialization = async () => {
     try {
@@ -31,6 +35,21 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
       
       const status = await authAPI.checkInitialization();
       setInitStatus(status);
+      
+      // 如果系统已初始化，检查认证状态
+      if (status.isInitialized && !authInitialized && !isCheckingAuth) {
+        setIsCheckingAuth(true);
+        try {
+          await checkAuthStatus();
+          setAuthInitialized(true);
+        } catch (authError) {
+          console.warn('认证状态检查失败:', authError);
+          // 认证检查失败不影响应用启动
+          setAuthInitialized(true);
+        } finally {
+          setIsCheckingAuth(false);
+        }
+      }
     } catch (error: any) {
       console.error('检查系统初始化状态失败:', error);
       setError(
@@ -120,7 +139,35 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     return <SystemSetup />;
   }
 
-  // 系统已初始化，渲染子组件
+  // 系统已初始化且认证状态已检查，渲染子组件
+  if (initStatus && initStatus.isInitialized && !authInitialized) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <FiServer className="text-white text-2xl" />
+          </motion.div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            正在初始化用户状态
+          </h2>
+          <p className="text-gray-600 mb-4">
+            请稍候，正在检查认证状态...
+          </p>
+          <LoadingSpinner size="lg" />
+        </motion.div>
+      </div>
+    );
+  }
+
   return <>{children}</>;
 };
 

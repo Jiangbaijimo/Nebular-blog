@@ -61,12 +61,26 @@ class SQLiteManager {
   private db: Database | null = null;
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
+  private isTauriApp = false;
 
   constructor() {
-    this.initPromise = this.initialize();
+    // 检查是否在Tauri环境中
+    this.isTauriApp = typeof window !== 'undefined' && '__TAURI__' in window;
+    
+    if (this.isTauriApp) {
+      this.initPromise = this.initialize();
+    } else {
+      console.warn('SQLite数据库仅在Tauri环境中可用，当前运行在Web环境中');
+      this.isInitialized = true; // 标记为已初始化以避免阻塞
+    }
   }
 
   private async initialize(): Promise<void> {
+    if (!this.isTauriApp) {
+      console.warn('尝试在非Tauri环境中初始化SQLite数据库');
+      return;
+    }
+
     try {
       // 连接到SQLite数据库
       this.db = await Database.load('sqlite:blog_local.db');
@@ -78,7 +92,13 @@ class SQLiteManager {
       console.log('SQLite数据库初始化成功');
     } catch (error) {
       console.error('SQLite数据库初始化失败:', error);
-      throw error;
+      // 在开发环境中不抛出错误，允许应用继续运行
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('开发环境中SQLite初始化失败，应用将继续运行');
+        this.isInitialized = true;
+      } else {
+        throw error;
+      }
     }
   }
 
@@ -176,6 +196,10 @@ class SQLiteManager {
   }
 
   private async ensureInitialized(): Promise<void> {
+    if (!this.isTauriApp) {
+      throw new Error('SQLite数据库仅在Tauri环境中可用');
+    }
+    
     if (!this.isInitialized && this.initPromise) {
       await this.initPromise;
     }

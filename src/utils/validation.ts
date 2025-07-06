@@ -1,6 +1,6 @@
 // 验证工具函数
 
-import { REGEX_PATTERNS } from '@/constants';
+import { REGEX_PATTERNS } from '../constants';
 
 /**
  * 验证规则类型

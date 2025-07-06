@@ -5,8 +5,6 @@ import type {
   User,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   ResetPasswordRequest,
@@ -39,24 +37,7 @@ class AuthAPI {
     return response;
   }
 
-  /**
-   * 用户注册
-   */
-  async register(userData: RegisterRequest): Promise<RegisterResponse> {
-    const response = await httpClient.post<RegisterResponse>(
-      API_ENDPOINTS.AUTH.REGISTER,
-      userData,
-      { skipAuth: true }
-    );
 
-    // 如果注册后自动登录，保存token
-    if (response.accessToken) {
-      TokenManager.setAccessToken(response.accessToken, response.expiresIn);
-      TokenManager.setRefreshToken(response.refreshToken);
-    }
-
-    return response;
-  }
 
   /**
    * 用户登出
@@ -108,7 +89,11 @@ class AuthAPI {
    * 获取当前用户信息
    */
   async getCurrentUser(): Promise<User> {
-    return httpClient.get<User>(API_ENDPOINTS.AUTH.ME);
+    const response = await httpClient.get<{
+      success: boolean;
+      data: User;
+    }>(API_ENDPOINTS.AUTH.PROFILE);
+    return response.data;
   }
 
   /**
@@ -355,24 +340,7 @@ class AuthAPI {
     return response.data;
   }
 
-  /**
-   * 邮箱快速注册（仅需邮箱）
-   */
-  async quickRegisterByEmail(email: string): Promise<RegisterResponse> {
-    const response = await httpClient.post<RegisterResponse>(
-      API_ENDPOINTS.AUTH.REGISTER,
-      { email },
-      { skipAuth: true }
-    );
 
-    // 如果注册后自动登录，保存token
-    if (response.accessToken) {
-      TokenManager.setAccessToken(response.accessToken, response.expiresIn);
-      TokenManager.setRefreshToken(response.refreshToken);
-    }
-
-    return response;
-  }
 }
 
 // 创建认证API实例

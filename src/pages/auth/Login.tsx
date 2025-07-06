@@ -1,10 +1,11 @@
 // 登录页面组件
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome, User } from 'lucide-react';
 import authAPI from '../../services/api/auth';
 import oauthService from '../../services/auth/oauthService';
 import tokenManager from '../../services/auth/tokenManager';
+import { useAuthStore } from '../../stores/authStore';
 import type { LoginCredentials, OAuthProvider } from '../../types/auth';
 
 /**
@@ -30,17 +31,14 @@ const Login: React.FC = () => {
   // 获取重定向路径
   const from = (location.state as any)?.from?.pathname || '/';
   
-  // 检查是否已登录
+  // 检查是否已登录（使用store中的状态）
+  const { isAuthenticated } = useAuthStore();
+  
   useEffect(() => {
-    const checkAuth = async () => {
-      const isAuthenticated = await tokenManager.isAuthenticated();
-      if (isAuthenticated) {
-        navigate(from, { replace: true });
-      }
-    };
-    
-    checkAuth();
-  }, [navigate, from]);
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
 
   /**
    * 处理表单输入变化
@@ -210,13 +208,7 @@ const Login: React.FC = () => {
             登录账户
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            还没有账户？{' '}
-            <Link
-              to="/auth/register"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-            >
-              立即注册
-            </Link>
+            使用 GitHub 或 Google 账户登录
           </p>
         </div>
 

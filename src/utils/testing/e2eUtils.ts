@@ -334,9 +334,7 @@ export class LoginPage extends BasePage {
     await this.click('[data-testid="login-button"]');
   }
   
-  async clickRegisterLink(): Promise<void> {
-    await this.click('[data-testid="register-link"]');
-  }
+
   
   async clickForgotPasswordLink(): Promise<void> {
     await this.click('[data-testid="forgot-password-link"]');

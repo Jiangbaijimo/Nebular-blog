@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
 import tokenManager from '../../services/auth/tokenManager';
 import autoRefreshService from '../../services/auth/autoRefresh';
 
@@ -23,72 +24,31 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   requireAuth = true,
 }) => {
   const location = useLocation();
-  const [authState, setAuthState] = useState<{
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    error: string | null;
-  }>({
-    isLoading: true,
-    isAuthenticated: false,
-    error: null,
-  });
+  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
+  const [localError, setLocalError] = useState<string | null>(null);
 
   /**
-   * 检查认证状态
+   * 检查认证状态（使用authStore）
    */
-  const checkAuthStatus = async () => {
+  const handleAuthCheck = async () => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      // 检查是否有有效的Token
-      const isAuthenticated = await tokenManager.isAuthenticated();
-      
-      if (isAuthenticated) {
-        // 检查Token是否即将过期，如果是则尝试刷新
-        const needsRefresh = await autoRefreshService.needsRefresh();
-        if (needsRefresh) {
-          try {
-            await autoRefreshService.forceRefresh();
-          } catch (refreshError) {
-            console.warn('Token refresh failed during auth check:', refreshError);
-            // 刷新失败，但Token可能仍然有效，继续检查
-            const stillAuthenticated = await tokenManager.isAuthenticated();
-            if (!stillAuthenticated) {
-              setAuthState({
-                isLoading: false,
-                isAuthenticated: false,
-                error: 'Token已过期，请重新登录',
-              });
-              return;
-            }
-          }
-        }
-      }
-      
-      setAuthState({
-        isLoading: false,
-        isAuthenticated,
-        error: null,
-      });
+      setLocalError(null);
+      await checkAuthStatus();
     } catch (error) {
       console.error('Auth check failed:', error);
-      setAuthState({
-        isLoading: false,
-        isAuthenticated: false,
-        error: error instanceof Error ? error.message : '认证检查失败',
-      });
+      setLocalError(error instanceof Error ? error.message : '认证检查失败');
     }
   };
 
   // 初始认证检查
   useEffect(() => {
-    checkAuthStatus();
+    handleAuthCheck();
   }, []);
 
   // 监听Token变化
   useEffect(() => {
     const handleTokenChange = () => {
-      checkAuthStatus();
+      handleAuthCheck();
     };
 
     // 监听Token变化事件
@@ -105,7 +65,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden && requireAuth) {
-        checkAuthStatus();
+        handleAuthCheck();
       }
     };
 
@@ -117,7 +77,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   }, [requireAuth]);
 
   // 加载状态
-  if (authState.isLoading) {
+  if (isLoading) {
     if (fallback) {
       return <>{fallback}</>;
     }
@@ -135,18 +95,18 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   }
 
   // 需要认证但未认证
-  if (requireAuth && !authState.isAuthenticated) {
+  if (requireAuth && !isAuthenticated) {
     return (
       <Navigate
         to={redirectTo}
-        state={{ from: location, error: authState.error }}
+        state={{ from: location, error: localError }}
         replace
       />
     );
   }
 
   // 不需要认证但已认证（如登录页面）
-  if (!requireAuth && authState.isAuthenticated) {
+  if (!requireAuth && isAuthenticated) {
     // 从state中获取原始目标路径，或默认跳转到首页
     const from = (location.state as any)?.from?.pathname || '/';
     return <Navigate to={from} replace />;
@@ -247,44 +207,24 @@ export const withGuest = <P extends object>(
 };
 
 /**
- * Hook：获取认证状态
+ * Hook：获取认证状态（使用authStore）
  */
 export const useAuthGuard = () => {
-  const [authState, setAuthState] = useState<{
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    error: string | null;
-  }>({
-    isLoading: true,
-    isAuthenticated: false,
-    error: null,
-  });
+  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
+  const [error, setError] = useState<string | null>(null);
 
-  const checkAuth = async () => {
+  const refetch = async () => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const isAuthenticated = await tokenManager.isAuthenticated();
-      
-      setAuthState({
-        isLoading: false,
-        isAuthenticated,
-        error: null,
-      });
-    } catch (error) {
-      setAuthState({
-        isLoading: false,
-        isAuthenticated: false,
-        error: error instanceof Error ? error.message : '认证检查失败',
-      });
+      setError(null);
+      await checkAuthStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '认证检查失败');
     }
   };
 
   useEffect(() => {
-    checkAuth();
-
     const handleAuthChange = () => {
-      checkAuth();
+      refetch();
     };
 
     window.addEventListener('auth:token-changed', handleAuthChange);
@@ -297,8 +237,10 @@ export const useAuthGuard = () => {
   }, []);
 
   return {
-    ...authState,
-    refetch: checkAuth,
+    isLoading,
+    isAuthenticated,
+    error,
+    refetch,
   };
 };
 

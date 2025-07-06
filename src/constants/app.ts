@@ -288,7 +288,6 @@ export const SUCCESS_MESSAGES = {
   UPLOAD_SUCCESS: '上传成功',
   LOGIN_SUCCESS: '登录成功',
   LOGOUT_SUCCESS: '退出成功',
-  REGISTER_SUCCESS: '注册成功',
   PASSWORD_RESET_SUCCESS: '密码重置成功',
   EMAIL_SENT: '邮件发送成功',
   SYNC_SUCCESS: '同步成功',

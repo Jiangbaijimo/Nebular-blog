@@ -103,17 +103,7 @@ export interface LoginRequest {
   twoFactorCode?: string;
 }
 
-// 注册请求
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  displayName: string;
-  acceptTerms: boolean;
-  newsletter?: boolean;
-  inviteCode?: string;
-}
+
 
 // 登录响应
 export interface LoginResponse {
@@ -308,7 +298,6 @@ export interface AuthContext {
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   updateProfile: (data: ProfileUpdateRequest) => Promise<void>;

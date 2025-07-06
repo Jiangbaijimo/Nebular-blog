@@ -96,7 +96,6 @@ export interface ApiEndpoints {
   // 认证相关
   auth: {
     login: string;
-    register: string;
     logout: string;
     refresh: string;
     resetPassword: string;

@@ -57,12 +57,25 @@ const getStorage = (type: StorageType): Storage => {
  */
 export const isStorageAvailable = (type: StorageType): boolean => {
   try {
+    // 在Tauri环境中，localStorage可能在初始化早期不可用
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    
     const storage = getStorage(type);
+    
+    // 检查storage对象是否存在
+    if (!storage) {
+      return false;
+    }
+    
     const testKey = '__storage_test__';
     storage.setItem(testKey, 'test');
     storage.removeItem(testKey);
     return true;
-  } catch {
+  } catch (error) {
+    // 在Tauri环境中，localStorage可能暂时不可用
+    console.debug(`${type} is not available:`, error);
     return false;
   }
 };
@@ -85,7 +98,7 @@ export const setStorageItem = <T>(
   } = options;
   
   if (!isStorageAvailable(type)) {
-    console.warn(`${type} is not available`);
+    console.debug(`${type} is not available, skipping storage operation`);
     return;
   }
   
@@ -126,7 +139,9 @@ export const getStorageItem = <T>(
   type: StorageType = 'localStorage'
 ): T | undefined => {
   if (!isStorageAvailable(type)) {
-    console.warn(`${type} is not available`);
+    // 在Tauri环境中，localStorage可能在应用启动时暂时不可用
+    // 使用debug级别日志避免过多警告
+    console.debug(`${type} is not available, returning default value`);
     return defaultValue;
   }
   
@@ -178,7 +193,7 @@ export const removeStorageItem = (
   type: StorageType = 'localStorage'
 ): void => {
   if (!isStorageAvailable(type)) {
-    console.warn(`${type} is not available`);
+    console.debug(`${type} is not available, skipping remove operation`);
     return;
   }
   

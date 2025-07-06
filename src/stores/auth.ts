@@ -58,7 +58,7 @@ export interface AuthActions {
   // 登录/登出
   login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+
   
   // OAuth
   loginWithOAuth: (provider: string) => Promise<void>;
@@ -98,17 +98,8 @@ export interface AuthActions {
   reset: () => void;
 }
 
-/**
- * 注册数据接口
- */
-interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptTerms: boolean;
-  newsletter?: boolean;
-}
+
+
 
 // ==================== 默认状态 ====================
 
@@ -326,40 +317,6 @@ export const useAuthStore = create<AuthState & AuthActions>()
 
               // 触发登出事件
               window.dispatchEvent(new CustomEvent('auth-logout'));
-            }
-          },
-
-          // 注册
-          register: async (userData) => {
-            try {
-              set((state) => {
-                state.isLoading = true;
-                state.error = null;
-              });
-
-              const response = await httpClient.post(API_ENDPOINTS.AUTH.REGISTER, userData);
-
-              if (response.success) {
-                // 注册成功，可能需要邮箱验证
-                set((state) => {
-                  state.isLoading = false;
-                });
-
-                // 触发注册成功事件
-                window.dispatchEvent(new CustomEvent('auth-register', {
-                  detail: { email: userData.email }
-                }));
-              }
-            } catch (error) {
-              set((state) => {
-                state.error = {
-                  code: 'REGISTER_ERROR',
-                  message: error instanceof Error ? error.message : 'Registration failed',
-                  timestamp: new Date().toISOString()
-                };
-                state.isLoading = false;
-              });
-              throw error;
             }
           },
 

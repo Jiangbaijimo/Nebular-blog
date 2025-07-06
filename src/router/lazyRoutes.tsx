@@ -17,7 +17,6 @@ const BlogEditor = React.lazy(() => import('../pages/blog/BlogEditor'));
 
 // 认证页面
 const Login = React.lazy(() => import('../pages/auth/Login'));
-const Register = React.lazy(() => import('../pages/auth/Register'));
 const SimpleLogin = React.lazy(() => import('../pages/auth/SimpleLogin'));
 
 // 系统设置页面
@@ -53,8 +52,7 @@ export const preloadRoute = (routeName: string) => {
       return import('../pages/blog/BlogEditor');
     case 'login':
       return import('../pages/auth/Login');
-    case 'register':
-      return import('../pages/auth/Register');
+
     case 'admin':
       return import('../pages/admin/AdminLayout');
     case 'admin-dashboard':
@@ -128,14 +126,7 @@ export const lazyRoutes: RouteObject[] = [
       </LazyWrapper>
     ),
   },
-  {
-    path: '/auth/register',
-    element: (
-      <LazyWrapper>
-        <Register />
-      </LazyWrapper>
-    ),
-  },
+
   {
     path: '/auth/simple-login',
     element: (
@@ -301,8 +292,7 @@ export class RoutePreloader {
       'blog-list': ['blog-detail', 'blog-editor'],
       'blog-detail': ['blog-list', 'blog-editor'],
       'blog-editor': ['blog-list', 'media-library'],
-      'login': ['home', 'register'],
-      'register': ['home', 'login'],
+      'login': ['home'],
       'admin-dashboard': ['blog-management', 'user-management', 'media-library'],
       'blog-management': ['blog-editor', 'media-library'],
       'user-management': ['user-profile'],

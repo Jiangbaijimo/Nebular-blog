@@ -86,13 +86,7 @@ export interface LoginCredentials {
   rememberMe?: boolean;
 }
 
-export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  displayName: string;
-  acceptTerms: boolean;
-}
+
 
 export interface ResetPasswordData {
   email: string;

@@ -6,7 +6,6 @@ import { authAPI } from '../services/api/auth';
 import type {
   User,
   LoginRequest,
-  RegisterRequest,
   UserPreferences,
   UserProfile,
   ChangePasswordRequest,
@@ -46,7 +45,7 @@ interface AuthState {
 interface AuthActions {
   // 基础认证操作
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<void>;
+
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
   
@@ -111,6 +110,9 @@ const initialState: AuthState = {
   twoFactorSetup: null,
 };
 
+// 防止重复调用的标志
+let isCheckingAuth = false;
+
 // 创建认证store
 export const useAuthStore = create<AuthStore>()
   (persist(
@@ -151,38 +153,7 @@ export const useAuthStore = create<AuthStore>()
         }
       },
 
-      register: async (userData: RegisterRequest) => {
-        set((state) => {
-          state.isLoading = true;
-          state.error = null;
-        });
 
-        try {
-          const response = await authAPI.register(userData);
-          
-          // 如果注册后自动登录
-          if (response.user) {
-            set((state) => {
-              state.user = response.user;
-              state.isAuthenticated = true;
-              state.isLoading = false;
-            });
-            
-            // 获取用户偏好设置
-            await get().getPreferences();
-          } else {
-            set((state) => {
-              state.isLoading = false;
-            });
-          }
-        } catch (error) {
-          set((state) => {
-            state.isLoading = false;
-            state.error = (error as Error).message;
-          });
-          throw error;
-        }
-      },
 
       logout: async () => {
         set((state) => {
@@ -661,38 +632,49 @@ export const useAuthStore = create<AuthStore>()
       // ==================== 认证检查 ====================
       
       checkAuthStatus: async () => {
-        const token = authAPI.getAccessToken();
-        
-        if (!token) {
-          set((state) => {
-            state.isAuthenticated = false;
-            state.user = null;
-          });
+        // 防止重复调用
+        if (isCheckingAuth) {
           return;
         }
+        
+        isCheckingAuth = true;
+        
+        try {
+          const token = authAPI.getAccessToken();
+          
+          if (!token) {
+            set((state) => {
+              state.isAuthenticated = false;
+              state.user = null;
+            });
+            return;
+          }
 
-        if (authAPI.isAuthenticated()) {
-          try {
-            // 如果token有效但没有用户信息，获取用户信息
-            if (!get().user) {
-              await get().getCurrentUser();
+          if (authAPI.isAuthenticated()) {
+            try {
+              // 如果token有效但没有用户信息，获取用户信息
+              if (!get().user) {
+                await get().getCurrentUser();
+              }
+              
+              // 检查是否需要刷新token
+              if (authAPI.shouldRefreshToken()) {
+                await get().refreshToken();
+              }
+            } catch (error) {
+              console.warn('Auth status check failed:', error);
+              await get().logout();
             }
-            
-            // 检查是否需要刷新token
-            if (authAPI.shouldRefreshToken()) {
+          } else {
+            // Token过期，尝试刷新
+            try {
               await get().refreshToken();
+            } catch (error) {
+              await get().logout();
             }
-          } catch (error) {
-            console.warn('Auth status check failed:', error);
-            await get().logout();
           }
-        } else {
-          // Token过期，尝试刷新
-          try {
-            await get().refreshToken();
-          } catch (error) {
-            await get().logout();
-          }
+        } finally {
+          isCheckingAuth = false;
         }
       },
 

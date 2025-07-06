@@ -34,8 +34,8 @@ export const useStores = () => {
 
 // 导出常用的store选择器
 export const useAuth = () => {
-  const { user, isAuthenticated, login, logout, register } = useAuthStore();
-  return { user, isAuthenticated, login, logout, register };
+  const { user, isAuthenticated, login, logout } = useAuthStore();
+  return { user, isAuthenticated, login, logout };
 };
 
 export const useBlog = () => {

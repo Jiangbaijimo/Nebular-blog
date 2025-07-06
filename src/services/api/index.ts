@@ -35,8 +35,6 @@ export type {
   User,
   LoginRequest,
   LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   ResetPasswordRequest,

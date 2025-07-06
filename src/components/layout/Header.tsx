@@ -56,11 +56,16 @@ export const Header: React.FC<HeaderProps> = ({
   // 分类数据状态
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesFetched, setCategoriesFetched] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  // 获取分类树数据
+  // 获取分类树数据（防重复调用）
   useEffect(() => {
+    if (categoriesFetched || categoriesLoading) {
+      return;
+    }
+
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
@@ -78,11 +83,12 @@ export const Header: React.FC<HeaderProps> = ({
         console.error('获取分类失败:', error);
       } finally {
         setCategoriesLoading(false);
+        setCategoriesFetched(true);
       }
     };
 
     fetchCategories();
-  }, []);
+  }, [categoriesFetched, categoriesLoading]);
 
   // 清理定时器
   useEffect(() => {
