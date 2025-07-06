@@ -3,7 +3,7 @@ import localDB from '../storage/localDB';
 import authAPI from '../api/auth';
 import blogAPI from '../api/blog';
 import uploadAPI from '../api/upload';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import { useSyncStore } from '../../stores/syncStore';
 import type {
   SyncRecord,

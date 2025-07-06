@@ -5,7 +5,7 @@ import { Eye, EyeOff, Mail, Lock, Github, Chrome, User } from 'lucide-react';
 import authAPI from '../../services/api/auth';
 import oauthService from '../../services/auth/oauthService';
 import tokenManager from '../../services/auth/tokenManager';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import type { LoginCredentials, OAuthProvider } from '../../types/auth';
 
 /**

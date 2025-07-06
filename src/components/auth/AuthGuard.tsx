@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import tokenManager from '../../services/auth/tokenManager';
 import autoRefreshService from '../../services/auth/autoRefresh';
 

@@ -7,7 +7,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Alert } from '../../components/ui/Alert';
 import { LoadingSpinner } from '../../components/ui/Loading';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import { authAPI } from '../../services/api/auth';
 import { oauthService } from '../../services/auth/oauthService';
 

@@ -15,7 +15,7 @@ import {
   BookOpen,
   Shield
 } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import { useRoleGuard } from '../auth/RoleGuard';
 import { tokenManager } from '../../services/auth/tokenManager';
 

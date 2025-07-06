@@ -1,7 +1,7 @@
 // 状态管理索引文件
 
 // 导出所有store
-export { default as useAuthStore } from './authStore';
+export { useAuthStore } from './auth';
 export { default as useBlogStore } from './blogStore';
 export { default as useUploadStore } from './uploadStore';
 export { default as useAppStore } from './appStore';

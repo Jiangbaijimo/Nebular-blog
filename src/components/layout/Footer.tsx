@@ -11,7 +11,7 @@ import {
   Shield,
   Globe
 } from 'lucide-react';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuthStore } from '../../stores/auth';
 import { useRoleGuard } from '../auth/RoleGuard';
 
 interface FooterProps {
