@@ -189,6 +189,83 @@
         ]
       }
     },
+    "/api/auth/check-initialization": {
+      "get": {
+        "operationId": "AuthController_checkInitialization",
+        "summary": "检查博客初始化状态",
+        "description": "检查博客是否已完成初始化，包含管理员用户状态和用户数量信息，支持自动修复不一致状态",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "检查成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isInitialized": {
+                      "type": "boolean",
+                      "description": "是否已初始化"
+                    },
+                    "requiresSetup": {
+                      "type": "boolean",
+                      "description": "是否需要设置"
+                    },
+                    "allowRegistration": {
+                      "type": "boolean",
+                      "description": "是否允许注册"
+                    },
+                    "adminUserExists": {
+                      "type": "boolean",
+                      "description": "是否存在管理员用户"
+                    },
+                    "userCount": {
+                      "type": "number",
+                      "description": "用户总数"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "认证管理"
+        ]
+      }
+    },
+    "/api/auth/admin-register": {
+      "post": {
+        "operationId": "AuthController_adminRegister",
+        "summary": "管理员注册",
+        "description": "管理员注册接口，仅用于博客首次初始化时创建第一个管理员用户",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "注册成功"
+          },
+          "400": {
+            "description": "请求参数错误或博客已初始化"
+          },
+          "409": {
+            "description": "邮箱或用户名已存在"
+          }
+        },
+        "tags": [
+          "认证管理"
+        ]
+      }
+    },
     "/api/users": {
       "post": {
         "operationId": "UserController_create",
@@ -638,6 +715,149 @@
         },
         "tags": [
           "用户管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/system/settings": {
+      "get": {
+        "operationId": "SystemController_getAllSettings",
+        "summary": "获取所有系统设置",
+        "description": "获取所有系统配置项",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "获取成功"
+          },
+          "401": {
+            "description": "未授权访问"
+          }
+        },
+        "tags": [
+          "系统管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/system/settings/{key}": {
+      "get": {
+        "operationId": "SystemController_getSetting",
+        "summary": "获取系统设置",
+        "description": "根据键名获取系统配置项",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功"
+          },
+          "401": {
+            "description": "未授权访问"
+          }
+        },
+        "tags": [
+          "系统管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "SystemController_setSetting",
+        "summary": "设置系统配置",
+        "description": "设置或更新系统配置项",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "设置成功"
+          },
+          "401": {
+            "description": "未授权访问"
+          }
+        },
+        "tags": [
+          "系统管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "SystemController_deleteSetting",
+        "summary": "删除系统设置",
+        "description": "删除非系统级配置项",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功"
+          },
+          "401": {
+            "description": "未授权访问"
+          }
+        },
+        "tags": [
+          "系统管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
+    "/api/system/settings/initialize": {
+      "post": {
+        "operationId": "SystemController_initializeDefaultSettings",
+        "summary": "初始化默认设置",
+        "description": "初始化系统默认配置项",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "初始化成功"
+          },
+          "401": {
+            "description": "未授权访问"
+          }
+        },
+        "tags": [
+          "系统管理"
         ],
         "security": [
           {
@@ -4011,6 +4231,10 @@
         "properties": {}
       },
       "RefreshTokenDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "AdminRegisterDto": {
         "type": "object",
         "properties": {}
       },

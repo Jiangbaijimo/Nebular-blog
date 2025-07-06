@@ -113,6 +113,56 @@ paths:
         '200':
           description: ''
       tags: *ref_0
+  /api/auth/check-initialization:
+    get:
+      operationId: AuthController_checkInitialization
+      summary: 检查博客初始化状态
+      description: 检查博客是否已完成初始化，包含管理员用户状态和用户数量信息，支持自动修复不一致状态
+      parameters: []
+      responses:
+        '200':
+          description: 检查成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isInitialized:
+                    type: boolean
+                    description: 是否已初始化
+                  requiresSetup:
+                    type: boolean
+                    description: 是否需要设置
+                  allowRegistration:
+                    type: boolean
+                    description: 是否允许注册
+                  adminUserExists:
+                    type: boolean
+                    description: 是否存在管理员用户
+                  userCount:
+                    type: number
+                    description: 用户总数
+      tags: *ref_0
+  /api/auth/admin-register:
+    post:
+      operationId: AuthController_adminRegister
+      summary: 管理员注册
+      description: 管理员注册接口，仅用于博客首次初始化时创建第一个管理员用户
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminRegisterDto'
+      responses:
+        '201':
+          description: 注册成功
+        '400':
+          description: 请求参数错误或博客已初始化
+        '409':
+          description: 邮箱或用户名已存在
+      tags: *ref_0
   /api/users:
     post:
       operationId: UserController_create
@@ -389,6 +439,90 @@ paths:
       tags: *ref_1
       security:
         - JWT-auth: []
+  /api/system/settings:
+    get:
+      operationId: SystemController_getAllSettings
+      summary: 获取所有系统设置
+      description: 获取所有系统配置项
+      parameters: []
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: &ref_2
+        - 系统管理
+      security:
+        - JWT-auth: []
+  /api/system/settings/{key}:
+    get:
+      operationId: SystemController_getSetting
+      summary: 获取系统设置
+      description: 根据键名获取系统配置项
+      parameters:
+        - name: key
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 获取成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+    put:
+      operationId: SystemController_setSetting
+      summary: 设置系统配置
+      description: 设置或更新系统配置项
+      parameters:
+        - name: key
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 设置成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+    delete:
+      operationId: SystemController_deleteSetting
+      summary: 删除系统设置
+      description: 删除非系统级配置项
+      parameters:
+        - name: key
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 删除成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
+  /api/system/settings/initialize:
+    post:
+      operationId: SystemController_initializeDefaultSettings
+      summary: 初始化默认设置
+      description: 初始化系统默认配置项
+      parameters: []
+      responses:
+        '200':
+          description: 初始化成功
+        '401':
+          description: 未授权访问
+      tags: *ref_2
+      security:
+        - JWT-auth: []
   /api/blogs:
     post:
       operationId: BlogController_create
@@ -408,7 +542,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: &ref_2
+      tags: &ref_3
         - 博客管理
       security:
         - JWT-auth: []
@@ -514,7 +648,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_2
+      tags: *ref_3
   /api/blogs/admin:
     get:
       operationId: BlogController_findAllForAdmin
@@ -607,7 +741,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_2
+      tags: *ref_3
       security:
         - JWT-auth: []
   /api/blogs/my:
@@ -700,7 +834,7 @@ paths:
           description: 获取成功
         '401':
           description: 未授权访问
-      tags: *ref_2
+      tags: *ref_3
       security:
         - JWT-auth: []
   /api/blogs/stats:
@@ -714,7 +848,7 @@ paths:
           description: 获取成功
         '401':
           description: 未授权访问
-      tags: *ref_2
+      tags: *ref_3
       security:
         - JWT-auth: []
   /api/blogs/slug/{slug}:
@@ -733,7 +867,7 @@ paths:
           description: 获取成功
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
   /api/blogs/{id}:
     get:
       operationId: BlogController_findOne
@@ -750,7 +884,7 @@ paths:
           description: 获取成功
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
     patch:
       operationId: BlogController_update
       summary: 更新博客
@@ -776,7 +910,7 @@ paths:
           description: 权限不足
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
       security:
         - JWT-auth: []
     delete:
@@ -798,7 +932,7 @@ paths:
           description: 权限不足
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
       security:
         - JWT-auth: []
   /api/blogs/{id}/like:
@@ -817,7 +951,7 @@ paths:
           description: 点赞成功
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
     delete:
       operationId: BlogController_unlikeBlog
       summary: 取消点赞
@@ -833,7 +967,7 @@ paths:
           description: 取消点赞成功
         '404':
           description: 博客不存在
-      tags: *ref_2
+      tags: *ref_3
   /api/categories:
     post:
       operationId: CategoryController_create
@@ -853,7 +987,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: &ref_3
+      tags: &ref_4
         - 分类管理
       security:
         - JWT-auth: []
@@ -865,7 +999,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_3
+      tags: *ref_4
   /api/categories/admin:
     get:
       operationId: CategoryController_findAllForAdmin
@@ -879,7 +1013,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_3
+      tags: *ref_4
       security:
         - JWT-auth: []
   /api/categories/tree:
@@ -891,7 +1025,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_3
+      tags: *ref_4
   /api/categories/stats:
     get:
       operationId: CategoryController_getStats
@@ -905,7 +1039,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_3
+      tags: *ref_4
       security:
         - JWT-auth: []
   /api/categories/slug/{slug}:
@@ -924,7 +1058,7 @@ paths:
           description: 获取成功
         '404':
           description: 分类不存在
-      tags: *ref_3
+      tags: *ref_4
   /api/categories/{id}:
     get:
       operationId: CategoryController_findOne
@@ -941,7 +1075,7 @@ paths:
           description: 获取成功
         '404':
           description: 分类不存在
-      tags: *ref_3
+      tags: *ref_4
     patch:
       operationId: CategoryController_update
       summary: 更新分类
@@ -967,7 +1101,7 @@ paths:
           description: 权限不足
         '404':
           description: 分类不存在
-      tags: *ref_3
+      tags: *ref_4
       security:
         - JWT-auth: []
     delete:
@@ -989,7 +1123,7 @@ paths:
           description: 权限不足
         '404':
           description: 分类不存在
-      tags: *ref_3
+      tags: *ref_4
       security:
         - JWT-auth: []
   /api/categories/{id}/blog-count:
@@ -1012,7 +1146,7 @@ paths:
           description: 权限不足
         '404':
           description: 分类不存在
-      tags: *ref_3
+      tags: *ref_4
       security:
         - JWT-auth: []
   /api/comments:
@@ -1034,7 +1168,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: &ref_4
+      tags: &ref_5
         - 评论管理
       security:
         - JWT-auth: []
@@ -1050,7 +1184,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/blog/{blogId}:
@@ -1072,7 +1206,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_4
+      tags: *ref_5
   /api/comments/my:
     get:
       operationId: CommentController_findMyComments
@@ -1086,7 +1220,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/stats:
@@ -1102,7 +1236,7 @@ paths:
           description: 未授权访问
         '403':
           description: 权限不足
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/{id}:
@@ -1125,7 +1259,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
     patch:
@@ -1153,7 +1287,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
     delete:
@@ -1175,7 +1309,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/{id}/status:
@@ -1204,7 +1338,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/{id}/approve:
@@ -1227,7 +1361,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/{id}/reject:
@@ -1250,7 +1384,7 @@ paths:
           description: 权限不足
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
       security:
         - JWT-auth: []
   /api/comments/{id}/like:
@@ -1269,7 +1403,7 @@ paths:
           description: 点赞成功
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
     delete:
       operationId: CommentController_unlikeComment
       summary: 取消点赞评论
@@ -1285,7 +1419,7 @@ paths:
           description: 取消点赞成功
         '404':
           description: 评论不存在
-      tags: *ref_4
+      tags: *ref_5
   /api/cloud-functions:
     post:
       operationId: CloudFunctionController_create
@@ -1306,7 +1440,7 @@ paths:
           description: 未授权
         '403':
           description: 权限不足
-      tags: &ref_5
+      tags: &ref_6
         - 云函数管理
       security:
         - JWT-auth: []
@@ -1383,7 +1517,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
   /api/cloud-functions/{id}:
@@ -1402,7 +1536,7 @@ paths:
           description: 获取成功
         '404':
           description: 云函数不存在
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
     patch:
@@ -1430,7 +1564,7 @@ paths:
           description: 权限不足
         '404':
           description: 云函数不存在
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
     delete:
@@ -1450,7 +1584,7 @@ paths:
           description: 权限不足
         '404':
           description: 云函数不存在
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
   /api/cloud-functions/{id}/secrets:
@@ -1473,7 +1607,7 @@ paths:
       responses:
         '201':
           description: 创建成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
   /api/cloud-functions/secrets/{secretId}:
@@ -1496,7 +1630,7 @@ paths:
       responses:
         '200':
           description: 更新成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
     delete:
@@ -1512,7 +1646,7 @@ paths:
       responses:
         '200':
           description: 删除成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
   /api/cloud-functions/{id}/logs:
@@ -1541,7 +1675,7 @@ paths:
       responses:
         '200':
           description: 获取成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
     delete:
@@ -1557,7 +1691,7 @@ paths:
       responses:
         '200':
           description: 清理成功
-      tags: *ref_5
+      tags: *ref_6
       security:
         - JWT-auth: []
   /api/fn/{reference}/*:
@@ -1580,7 +1714,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: &ref_6
+      tags: &ref_7
         - 云函数执行
     post:
       operationId: CloudFunctionExecuteController_execute_post
@@ -1601,7 +1735,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     put:
       operationId: CloudFunctionExecuteController_execute_put
       summary: 执行云函数
@@ -1621,7 +1755,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     delete:
       operationId: CloudFunctionExecuteController_execute_delete
       summary: 执行云函数
@@ -1641,7 +1775,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     patch:
       operationId: CloudFunctionExecuteController_execute_patch
       summary: 执行云函数
@@ -1661,7 +1795,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     options:
       operationId: CloudFunctionExecuteController_execute_options
       summary: 执行云函数
@@ -1681,7 +1815,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     head:
       operationId: CloudFunctionExecuteController_execute_head
       summary: 执行云函数
@@ -1701,7 +1835,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     search:
       operationId: CloudFunctionExecuteController_execute_search
       summary: 执行云函数
@@ -1721,7 +1855,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     propfind:
       operationId: CloudFunctionExecuteController_execute_propfind
       summary: 执行云函数
@@ -1741,7 +1875,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     proppatch:
       operationId: CloudFunctionExecuteController_execute_proppatch
       summary: 执行云函数
@@ -1761,7 +1895,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     mkcol:
       operationId: CloudFunctionExecuteController_execute_mkcol
       summary: 执行云函数
@@ -1781,7 +1915,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     copy:
       operationId: CloudFunctionExecuteController_execute_copy
       summary: 执行云函数
@@ -1801,7 +1935,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     move:
       operationId: CloudFunctionExecuteController_execute_move
       summary: 执行云函数
@@ -1821,7 +1955,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     lock:
       operationId: CloudFunctionExecuteController_execute_lock
       summary: 执行云函数
@@ -1841,7 +1975,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
     unlock:
       operationId: CloudFunctionExecuteController_execute_unlock
       summary: 执行云函数
@@ -1861,7 +1995,7 @@ paths:
           description: 云函数不存在
         '500':
           description: 执行失败
-      tags: *ref_6
+      tags: *ref_7
   /api/fn/{reference}:
     get:
       operationId: CloudFunctionExecuteController_executeSimple_get
@@ -1876,7 +2010,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     post:
       operationId: CloudFunctionExecuteController_executeSimple_post
       summary: 执行云函数（无路径）
@@ -1890,7 +2024,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     put:
       operationId: CloudFunctionExecuteController_executeSimple_put
       summary: 执行云函数（无路径）
@@ -1904,7 +2038,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     delete:
       operationId: CloudFunctionExecuteController_executeSimple_delete
       summary: 执行云函数（无路径）
@@ -1918,7 +2052,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     patch:
       operationId: CloudFunctionExecuteController_executeSimple_patch
       summary: 执行云函数（无路径）
@@ -1932,7 +2066,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     options:
       operationId: CloudFunctionExecuteController_executeSimple_options
       summary: 执行云函数（无路径）
@@ -1946,7 +2080,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     head:
       operationId: CloudFunctionExecuteController_executeSimple_head
       summary: 执行云函数（无路径）
@@ -1960,7 +2094,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     search:
       operationId: CloudFunctionExecuteController_executeSimple_search
       summary: 执行云函数（无路径）
@@ -1974,7 +2108,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     propfind:
       operationId: CloudFunctionExecuteController_executeSimple_propfind
       summary: 执行云函数（无路径）
@@ -1988,7 +2122,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     proppatch:
       operationId: CloudFunctionExecuteController_executeSimple_proppatch
       summary: 执行云函数（无路径）
@@ -2002,7 +2136,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     mkcol:
       operationId: CloudFunctionExecuteController_executeSimple_mkcol
       summary: 执行云函数（无路径）
@@ -2016,7 +2150,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     copy:
       operationId: CloudFunctionExecuteController_executeSimple_copy
       summary: 执行云函数（无路径）
@@ -2030,7 +2164,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     move:
       operationId: CloudFunctionExecuteController_executeSimple_move
       summary: 执行云函数（无路径）
@@ -2044,7 +2178,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     lock:
       operationId: CloudFunctionExecuteController_executeSimple_lock
       summary: 执行云函数（无路径）
@@ -2058,7 +2192,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
     unlock:
       operationId: CloudFunctionExecuteController_executeSimple_unlock
       summary: 执行云函数（无路径）
@@ -2072,7 +2206,7 @@ paths:
       responses:
         '200':
           description: ''
-      tags: *ref_6
+      tags: *ref_7
   /api/upload:
     post:
       operationId: UploadController_uploadFile
@@ -2118,7 +2252,7 @@ paths:
           description: 未授权访问
         '413':
           description: 文件过大
-      tags: &ref_7
+      tags: &ref_8
         - 文件上传
       security:
         - JWT-auth: []
@@ -2195,7 +2329,7 @@ paths:
           description: 获取成功
         '401':
           description: 未授权访问
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
     delete:
@@ -2216,7 +2350,7 @@ paths:
           description: 请求参数错误
         '401':
           description: 未授权访问
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
   /api/upload/batch:
@@ -2274,7 +2408,7 @@ paths:
                           type: string
                         error:
                           type: string
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
   /api/upload/stats:
@@ -2288,7 +2422,7 @@ paths:
           description: 获取成功
         '401':
           description: 未授权访问
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
   /api/upload/{id}/download-link:
@@ -2324,7 +2458,7 @@ paths:
           description: 未授权访问
         '404':
           description: 文件不存在
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
   /api/upload/download/{token}:
@@ -2345,7 +2479,7 @@ paths:
           description: 无效的下载令牌
         '404':
           description: 文件不存在
-      tags: *ref_7
+      tags: *ref_8
   /api/upload/thumbnails/{filename}:
     get:
       operationId: UploadController_getThumbnail
@@ -2362,7 +2496,7 @@ paths:
           description: 缩略图内容
         '404':
           description: 缩略图不存在
-      tags: *ref_7
+      tags: *ref_8
   /api/upload/{id}:
     get:
       operationId: UploadController_findOne
@@ -2385,7 +2519,7 @@ paths:
           description: 未授权访问
         '404':
           description: 文件不存在
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
     patch:
@@ -2415,7 +2549,7 @@ paths:
           description: 未授权访问
         '404':
           description: 文件不存在
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
     delete:
@@ -2435,7 +2569,7 @@ paths:
           description: 未授权访问
         '404':
           description: 文件不存在
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
   /api/upload/paste:
@@ -2468,7 +2602,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FileResponseDto'
-      tags: *ref_7
+      tags: *ref_8
       security:
         - JWT-auth: []
 info:
@@ -2505,6 +2639,9 @@ components:
       type: object
       properties: {}
     RefreshTokenDto:
+      type: object
+      properties: {}
+    AdminRegisterDto:
       type: object
       properties: {}
     CreateUserDto:
@@ -2557,14 +2694,14 @@ components:
         type:
           type: string
           description: 云函数类型
-          enum: &ref_8
+          enum: &ref_9
             - json
             - function
           example: json
         method:
           type: string
           description: 请求方法
-          enum: &ref_9
+          enum: &ref_10
             - GET
             - POST
             - PUT
@@ -2611,12 +2748,12 @@ components:
         type:
           type: string
           description: 云函数类型
-          enum: *ref_8
+          enum: *ref_9
           example: json
         method:
           type: string
           description: 请求方法
-          enum: *ref_9
+          enum: *ref_10
           example: GET
         content:
           type: string
