@@ -34,22 +34,18 @@ const SimpleLogin: React.FC = () => {
     setSubmitError(null);
 
     try {
-      const userInfo = await oauthService.authenticate(provider);
-      
-      // 使用OAuth信息登录
-      await authAPI.oauthLogin({
-        provider,
-        code: userInfo.id,
-        email: userInfo.email,
-        name: userInfo.name,
-        avatar: userInfo.avatar
-      });
-
-      // 登录成功，跳转到来源页面或首页
+      await oauthService.authenticate(provider);
+      // 认证成功后，oauthService 内部会处理重定向或token设置
+      // 这里可能不需要立即导航，或者由全局状态监听来处理
+      // 暂时保留，如果 oauthService 处理了导航，可以移除
       const from = (location.state as any)?.from?.pathname || '/';
       navigate(from, { replace: true });
     } catch (error: any) {
       console.error(`${provider} 登录失败:`, error);
+      // 用户取消授权时不显示错误
+      if (error.message.toLowerCase().includes('cancelled') || error.message.toLowerCase().includes('timeout')) {
+        return;
+      }
       setSubmitError(
         error.response?.data?.message || 
         error.message || 

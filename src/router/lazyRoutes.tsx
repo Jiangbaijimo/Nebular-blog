@@ -18,6 +18,7 @@ const BlogEditor = React.lazy(() => import('../pages/blog/BlogEditor'));
 // 认证页面
 const Login = React.lazy(() => import('../pages/auth/Login'));
 const SimpleLogin = React.lazy(() => import('../pages/auth/SimpleLogin'));
+const OAuthCallback = React.lazy(() => import('../pages/auth/OAuthCallback'));
 
 // 系统设置页面
 const SystemSetup = React.lazy(() => import('../pages/setup/SystemSetup'));
@@ -132,6 +133,14 @@ export const lazyRoutes: RouteObject[] = [
     element: (
       <LazyWrapper>
         <SimpleLogin />
+      </LazyWrapper>
+    ),
+  },
+  {
+    path: '/auth/callback',
+    element: (
+      <LazyWrapper>
+        <OAuthCallback />
       </LazyWrapper>
     ),
   },

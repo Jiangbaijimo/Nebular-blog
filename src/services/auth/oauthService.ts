@@ -1,34 +1,36 @@
 // OAuth认证服务
 import { invoke } from '@tauri-apps/api/core';
-import { openUrl } from '@tauri-apps/plugin-opener';
+
 import { listen } from '@tauri-apps/api/event';
 import tokenManager from './tokenManager';
+import { authAPI } from '../api';
 import type {
   OAuthProvider,
   OAuthConfig,
   OAuthState,
-  OAuthTokenResponse,
-  OAuthUserInfo,
+  LoginResponse,
 } from '../../types/auth';
+
+const IS_TAURI = typeof window !== 'undefined' && '__TAURI__' in window;
 
 /**
  * OAuth认证服务类
+ * 支持Tauri和Web环境
  */
 class OAuthService {
   private static instance: OAuthService;
   private configs: Map<OAuthProvider, OAuthConfig> = new Map();
   private pendingStates: Map<string, OAuthState> = new Map();
-  private readonly OAUTH_CALLBACK_PORT = 3001;
-  private callbackServer: any = null;
+  private readonly OAUTH_CALLBACK_PORT = 3001; // 仅用于Tauri
+  private readonly STATE_STORAGE_KEY = 'oauth_state';
 
   private constructor() {
     this.initializeConfigs();
-    this.setupCallbackListener();
+    if (IS_TAURI) {
+      this.setupTauriListener();
+    }
   }
 
-  /**
-   * 获取单例实例
-   */
   static getInstance(): OAuthService {
     if (!OAuthService.instance) {
       OAuthService.instance = new OAuthService();
@@ -36,131 +38,110 @@ class OAuthService {
     return OAuthService.instance;
   }
 
-  /**
-   * 初始化OAuth配置
-   */
+  private getRedirectUri(provider: OAuthProvider): string {
+    if (IS_TAURI) {
+      return `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/${provider}`;
+    }
+    // Web环境，回调到应用内的一个路由
+    return `${window.location.origin}/auth/callback/${provider}`;
+  }
+
   private initializeConfigs(): void {
-    // Google OAuth配置
-    this.configs.set('google', {
-      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_GOOGLE_CLIENT_SECRET || '',
-      redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/google`,
-      scope: 'openid profile email',
-      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenUrl: 'https://oauth2.googleapis.com/token',
-      userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
-    });
-
-    // GitHub OAuth配置
-    this.configs.set('github', {
-      clientId: import.meta.env.VITE_GITHUB_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_GITHUB_CLIENT_SECRET || '',
-      redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/github`,
-      scope: 'user:email',
-      authUrl: 'https://github.com/login/oauth/authorize',
-      tokenUrl: 'https://github.com/login/oauth/access_token',
-      userInfoUrl: 'https://api.github.com/user',
-    });
-
-    // Microsoft OAuth配置
-    this.configs.set('microsoft', {
-      clientId: import.meta.env.VITE_MICROSOFT_CLIENT_ID || '',
-      clientSecret: import.meta.env.VITE_MICROSOFT_CLIENT_SECRET || '',
-      redirectUri: `http://localhost:${this.OAUTH_CALLBACK_PORT}/callback/microsoft`,
-      scope: 'openid profile email',
-      authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-      tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
-      userInfoUrl: 'https://graph.microsoft.com/v1.0/me',
-    });
-  }
-
-  /**
-   * 设置回调监听器
-   */
-  private async setupCallbackListener(): Promise<void> {
-    try {
-      // 检查是否在Tauri环境中
-      if (typeof window !== 'undefined' && window.__TAURI__) {
-        // 监听来自Tauri后端的OAuth回调事件
-        const unlisten = await listen('oauth-callback', (event: any) => {
-          this.handleOAuthCallback(event.payload);
-        });
-
-        console.log('OAuth callback listener setup complete');
-        
-        // 可以保存unlisten函数以便后续清理
-        // this.unlistenCallback = unlisten;
-      } else {
-        console.warn('Not running in Tauri environment, OAuth callback listener not available');
-      }
-    } catch (error) {
-      console.error('Failed to setup OAuth callback listener:', error);
-      // 如果监听器设置失败，不要阻止整个服务的初始化
-      console.warn('OAuth callback listener is not available, OAuth functionality may be limited');
-    }
-  }
-
-  /**
-   * 启动OAuth认证流程
-   */
-  async authenticate(provider: OAuthProvider): Promise<OAuthUserInfo> {
-    const config = this.configs.get(provider);
-    if (!config) {
-      throw new Error(`Unsupported OAuth provider: ${provider}`);
-    }
-
-    if (!config.clientId) {
-      throw new Error(`OAuth client ID not configured for ${provider}`);
-    }
-
-    try {
-      // 生成状态参数
-      const state = this.generateState();
-      const nonce = this.generateNonce();
-
-      // 保存状态信息
-      this.pendingStates.set(state, {
-        provider,
-        nonce,
-        timestamp: Date.now(),
-        resolve: null as any,
-        reject: null as any,
+    const providers: OAuthProvider[] = ['google', 'github', 'microsoft'];
+    providers.forEach(provider => {
+      this.configs.set(provider, {
+        clientId: import.meta.env[`VITE_${provider.toUpperCase()}_CLIENT_ID`] || '',
+        clientSecret: import.meta.env[`VITE_${provider.toUpperCase()}_CLIENT_SECRET`] || '', // 注意：clientSecret不应在前端使用
+        redirectUri: this.getRedirectUri(provider),
+        scope: provider === 'github' ? 'user:email' : 'openid profile email',
+        authUrl: this.getAuthUrl(provider),
       });
+    });
+  }
 
-      // 构建授权URL
-      const authUrl = this.buildAuthUrl(config, state, nonce);
+  private getAuthUrl(provider: OAuthProvider): string {
+    switch (provider) {
+      case 'google': return 'https://accounts.google.com/o/oauth2/v2/auth';
+      case 'github': return 'https://github.com/login/oauth/authorize';
+      case 'microsoft': return 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
+      default: throw new Error(`Unsupported provider: ${provider}`);
+    }
+  }
 
-      // 启动本地回调服务器
-      await this.startCallbackServer();
+  private async setupTauriListener(): Promise<void> {
+    try {
+      await listen('oauth-callback', (event: any) => {
+        this.handleTauriCallback(event.payload);
+      });
+      console.log('Tauri OAuth callback listener setup complete');
+    } catch (error) {
+      console.error('Failed to setup Tauri OAuth callback listener:', error);
+    }
+  }
 
-      // 在默认浏览器中打开授权URL
-      await openUrl(authUrl);
+  async authenticate(provider: OAuthProvider): Promise<any> {
+    const config = this.configs.get(provider);
+    if (!config || !config.clientId) {
+      throw new Error(`OAuth not configured for ${provider}`);
+    }
 
-      // 返回Promise，等待回调
+    const state = this.generateState();
+    const nonce = this.generateNonce();
+    const stateData = { provider, nonce, timestamp: Date.now() };
+
+    // 构建授权URL
+    const authUrl = this.buildAuthUrl(config, state, nonce);
+
+    if (IS_TAURI) {
+      // Tauri环境：启动本地服务器并监听回调
+      this.pendingStates.set(state, { ...stateData, resolve: null as any, reject: null as any });
+      await this.startTauriCallbackServer();
+      const { open } = await import('@tauri-apps/plugin-opener');
+      await open(authUrl);
       return new Promise((resolve, reject) => {
-        const stateData = this.pendingStates.get(state);
-        if (stateData) {
-          stateData.resolve = resolve;
-          stateData.reject = reject;
-
-          // 设置超时
+        const pendingState = this.pendingStates.get(state);
+        if (pendingState) {
+          pendingState.resolve = resolve;
+          pendingState.reject = reject;
           setTimeout(() => {
             this.pendingStates.delete(state);
             reject(new Error('OAuth authentication timeout'));
           }, 300000); // 5分钟超时
-        } else {
-          reject(new Error('Failed to initialize OAuth state'));
         }
       });
-    } catch (error) {
-      console.error(`OAuth authentication failed for ${provider}:`, error);
-      throw error;
+    } else {
+      // Web环境：保存状态并重定向
+      sessionStorage.setItem(this.STATE_STORAGE_KEY, JSON.stringify({ state, ...stateData }));
+      window.location.href = authUrl;
     }
   }
 
   /**
-   * 构建授权URL
+   * 处理来自Web环境的回调 (由/auth/callback/:provider页面调用)
    */
+  async handleWebAppCallback(url: URL): Promise<LoginResponse> {
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const error = url.searchParams.get('error');
+
+    if (error) {
+      throw new Error(`OAuth failed: ${error}`);
+    }
+
+    const storedStateJSON = sessionStorage.getItem(this.STATE_STORAGE_KEY);
+    if (!storedStateJSON) {
+      throw new Error('No OAuth state found in session storage.');
+    }
+    sessionStorage.removeItem(this.STATE_STORAGE_KEY);
+
+    const storedState = JSON.parse(storedStateJSON);
+    if (!code || !state || state !== storedState.state) {
+      throw new Error('Invalid state or missing code from OAuth callback.');
+    }
+
+    return this.authenticateWithBackend(storedState.provider, code);
+  }
+
   private buildAuthUrl(config: OAuthConfig, state: string, nonce: string): string {
     const params = new URLSearchParams({
       client_id: config.clientId,
@@ -169,404 +150,128 @@ class OAuthService {
       scope: config.scope,
       state,
     });
-
-    // 对于支持OIDC的提供商，添加nonce
-    if (config.authUrl.includes('google') || config.authUrl.includes('microsoft')) {
+    if (config.scope.includes('openid')) {
       params.append('nonce', nonce);
     }
-
     return `${config.authUrl}?${params.toString()}`;
   }
 
-  /**
-   * 启动回调服务器
-   */
-  private async startCallbackServer(): Promise<void> {
+  private async startTauriCallbackServer(): Promise<void> {
     try {
-      // 使用Tauri命令启动本地HTTP服务器
-      await invoke('start_oauth_server', {
-        port: this.OAUTH_CALLBACK_PORT,
-      });
-
-      console.log(`OAuth callback server started on port ${this.OAUTH_CALLBACK_PORT}`);
+      await invoke('start_oauth_server', { port: this.OAUTH_CALLBACK_PORT });
+      console.log(`Tauri OAuth callback server started on port ${this.OAUTH_CALLBACK_PORT}`);
     } catch (error) {
-      console.error('Failed to start OAuth callback server:', error);
+      console.error('Failed to start Tauri OAuth callback server:', error);
       throw error;
     }
   }
 
-  /**
-   * 停止回调服务器
-   */
-  private async stopCallbackServer(): Promise<void> {
+  private async stopTauriCallbackServer(): Promise<void> {
+    if (!IS_TAURI) return;
     try {
       await invoke('stop_oauth_server');
-      console.log('OAuth callback server stopped');
+      console.log('Tauri OAuth callback server stopped');
     } catch (error) {
-      console.error('Failed to stop OAuth callback server:', error);
+      console.error('Failed to stop Tauri OAuth callback server:', error);
     }
   }
 
-  /**
-   * 处理OAuth回调
-   */
-  private async handleOAuthCallback(payload: {
-    provider: OAuthProvider;
-    code?: string;
-    state?: string;
-    error?: string;
-    error_description?: string;
-  }): Promise<void> {
+  private async handleTauriCallback(payload: { provider: OAuthProvider; code?: string; state?: string; error?: string; error_description?: string; }): Promise<void> {
     const { provider, code, state, error, error_description } = payload;
+    const stateData = state ? this.pendingStates.get(state) : null;
 
-    // 检查是否有错误
-    if (error) {
-      const stateData = state ? this.pendingStates.get(state) : null;
-      if (stateData?.reject) {
-        stateData.reject(new Error(error_description || error));
-      }
-      if (state) {
-        this.pendingStates.delete(state);
-      }
+    if (!state || !stateData) {
+      console.error('Invalid or missing OAuth state parameter from Tauri callback.');
       return;
     }
 
-    // 验证状态参数
-    if (!state || !this.pendingStates.has(state)) {
-      console.error('Invalid or missing OAuth state parameter');
-      return;
-    }
-
-    const stateData = this.pendingStates.get(state)!;
-    
     try {
-      // 验证提供商匹配
-      if (stateData.provider !== provider) {
-        throw new Error('OAuth provider mismatch');
+      if (error) {
+        throw new Error(error_description || error);
       }
-
-      // 检查授权码
       if (!code) {
-        throw new Error('Missing authorization code');
+        throw new Error('Missing authorization code from Tauri callback.');
+      }
+      if (stateData.provider !== provider) {
+        throw new Error('OAuth provider mismatch in Tauri callback.');
       }
 
-      // 交换访问令牌
-      const tokenResponse = await this.exchangeCodeForToken(provider, code);
+      const authResult = await this.authenticateWithBackend(provider, code);
+      await tokenManager.setTokens(authResult.tokens);
       
-      // 获取用户信息
-      const userInfo = await this.fetchUserInfo(provider, tokenResponse.access_token);
-      
-      // 调用后端API进行用户认证/注册
-      const authResult = await this.authenticateWithBackend(provider, tokenResponse, userInfo);
-      
-      // 保存令牌
-      await tokenManager.setTokens({
-        accessToken: authResult.accessToken,
-        refreshToken: authResult.refreshToken,
-      });
-
-      // 解析Promise
       if (stateData.resolve) {
-        stateData.resolve(userInfo);
+        stateData.resolve(authResult.user);
       }
-    } catch (error) {
-      console.error('OAuth callback handling failed:', error);
+    } catch (e) {
+      console.error('Tauri OAuth callback handling failed:', e);
       if (stateData.reject) {
-        stateData.reject(error);
+        stateData.reject(e);
       }
     } finally {
-      // 清理状态
       this.pendingStates.delete(state);
-      
-      // 停止回调服务器
-      await this.stopCallbackServer();
+      await this.stopTauriCallbackServer();
     }
   }
 
   /**
-   * 交换授权码为访问令牌
+   * 与后端进行认证 (安全流程)
+   * @param provider OAuth提供商
+   * @param code 从OAuth提供商获取的授权码
+   * @returns 后端返回的登录响应，包含JWT token和用户信息
    */
-  private async exchangeCodeForToken(
-    provider: OAuthProvider,
-    code: string
-  ): Promise<OAuthTokenResponse> {
-    const config = this.configs.get(provider);
-    if (!config) {
-      throw new Error(`Configuration not found for provider: ${provider}`);
-    }
-
-    const params = new URLSearchParams({
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: config.redirectUri,
-    });
-
+  private async authenticateWithBackend(provider: OAuthProvider, code: string): Promise<LoginResponse> {
     try {
-      const response = await fetch(config.tokenUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-        },
-        body: params.toString(),
+      // 后端API应接收provider和code，然后在后端安全地交换token并验证用户
+      const response = await authAPI.oauthLogin({
+        provider,
+        code,
+        redirectUri: this.getRedirectUri(provider), // 发送redirectUri给后端用于token交换
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Token exchange failed: ${response.status} ${errorText}`);
-      }
-
-      const tokenData = await response.json();
-      
-      if (!tokenData.access_token) {
-        throw new Error('No access token in response');
-      }
-
-      return tokenData;
-    } catch (error) {
-      console.error(`Token exchange failed for ${provider}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * 获取用户信息
-   */
-  private async fetchUserInfo(
-    provider: OAuthProvider,
-    accessToken: string
-  ): Promise<OAuthUserInfo> {
-    const config = this.configs.get(provider);
-    if (!config) {
-      throw new Error(`Configuration not found for provider: ${provider}`);
-    }
-
-    try {
-      const response = await fetch(config.userInfoUrl, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user info: ${response.status}`);
-      }
-
-      const userData = await response.json();
-      
-      // 标准化用户信息格式
-      return this.normalizeUserInfo(provider, userData);
-    } catch (error) {
-      console.error(`Failed to fetch user info for ${provider}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * 标准化用户信息
-   */
-  private normalizeUserInfo(provider: OAuthProvider, userData: any): OAuthUserInfo {
-    switch (provider) {
-      case 'google':
-        return {
-          id: userData.id,
-          email: userData.email,
-          name: userData.name,
-          avatar: userData.picture,
-          provider: 'google',
-          verified: userData.verified_email,
-        };
-      
-      case 'github':
-        return {
-          id: userData.id.toString(),
-          email: userData.email,
-          name: userData.name || userData.login,
-          avatar: userData.avatar_url,
-          provider: 'github',
-          verified: true, // GitHub邮箱默认验证
-        };
-      
-      case 'microsoft':
-        return {
-          id: userData.id,
-          email: userData.mail || userData.userPrincipalName,
-          name: userData.displayName,
-          avatar: null, // Microsoft Graph API需要单独请求头像
-          provider: 'microsoft',
-          verified: true,
-        };
-      
-      default:
-        throw new Error(`Unsupported provider for user info normalization: ${provider}`);
-    }
-  }
-
-  /**
-   * 与后端进行认证
-   */
-  private async authenticateWithBackend(
-    provider: OAuthProvider,
-    tokenResponse: OAuthTokenResponse,
-    userInfo: OAuthUserInfo
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    try {
-      const response = await fetch('/api/auth/oauth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          provider,
-          oauthToken: tokenResponse.access_token,
-          userInfo,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Backend authentication failed');
-      }
-
-      const authData = await response.json();
-      
-      if (!authData.accessToken || !authData.refreshToken) {
+      // 假设后端成功处理并返回LoginResponse结构
+      if (!response.tokens || !response.user) {
         throw new Error('Invalid authentication response from backend');
       }
 
-      return authData;
+      // 保存令牌
+      await tokenManager.setTokens(response.tokens);
+
+      return response;
     } catch (error) {
       console.error('Backend authentication failed:', error);
       throw error;
     }
   }
 
-  /**
-   * 生成状态参数
-   */
   private generateState(): string {
     return this.generateRandomString(32);
   }
 
-  /**
-   * 生成nonce参数
-   */
   private generateNonce(): string {
     return this.generateRandomString(16);
   }
 
-  /**
-   * 生成随机字符串
-   */
   private generateRandomString(length: number): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
-    
+    const randomValues = new Uint32Array(length);
+    crypto.getRandomValues(randomValues);
     for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+      result += chars[randomValues[i] % chars.length];
     }
-    
     return result;
   }
 
-  /**
-   * 获取支持的OAuth提供商
-   */
   getSupportedProviders(): OAuthProvider[] {
     return Array.from(this.configs.keys());
   }
 
-  /**
-   * 检查提供商是否已配置
-   */
   isProviderConfigured(provider: OAuthProvider): boolean {
     const config = this.configs.get(provider);
-    return !!(config && config.clientId && config.clientSecret);
-  }
-
-  /**
-   * 获取提供商配置状态
-   */
-  getProviderStatus(): Record<OAuthProvider, boolean> {
-    const status: Record<string, boolean> = {};
-    
-    for (const provider of this.getSupportedProviders()) {
-      status[provider] = this.isProviderConfigured(provider);
-    }
-    
-    return status as Record<OAuthProvider, boolean>;
-  }
-
-  /**
-   * 清理过期的状态
-   */
-  private cleanupExpiredStates(): void {
-    const now = Date.now();
-    const expiredStates: string[] = [];
-    
-    this.pendingStates.forEach((stateData, state) => {
-      if (now - stateData.timestamp > 300000) { // 5分钟过期
-        expiredStates.push(state);
-      }
-    });
-    
-    expiredStates.forEach(state => {
-      const stateData = this.pendingStates.get(state);
-      if (stateData?.reject) {
-        stateData.reject(new Error('OAuth state expired'));
-      }
-      this.pendingStates.delete(state);
-    });
-  }
-
-  /**
-   * 取消OAuth认证
-   */
-  async cancelAuthentication(state?: string): Promise<void> {
-    if (state && this.pendingStates.has(state)) {
-      const stateData = this.pendingStates.get(state);
-      if (stateData?.reject) {
-        stateData.reject(new Error('OAuth authentication cancelled'));
-      }
-      this.pendingStates.delete(state);
-    } else {
-      // 取消所有待处理的认证
-      this.pendingStates.forEach((stateData) => {
-        if (stateData.reject) {
-          stateData.reject(new Error('OAuth authentication cancelled'));
-        }
-      });
-      this.pendingStates.clear();
-    }
-    
-    // 停止回调服务器
-    await this.stopCallbackServer();
-  }
-
-  /**
-   * 获取OAuth认证状态
-   */
-  getAuthenticationStatus(): {
-    pending: number;
-    providers: OAuthProvider[];
-  } {
-    const pendingProviders: OAuthProvider[] = [];
-    
-    this.pendingStates.forEach((stateData) => {
-      pendingProviders.push(stateData.provider);
-    });
-    
-    return {
-      pending: this.pendingStates.size,
-      providers: pendingProviders,
-    };
+    return !!(config && config.clientId);
   }
 }
 
-// 创建单例实例
 const oauthService = OAuthService.getInstance();
 
 export { oauthService, OAuthService };
