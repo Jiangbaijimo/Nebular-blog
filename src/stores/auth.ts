@@ -767,7 +767,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               state.user = data.user;
               state.tokens = data.tokens || null;
               state.session = data.session || null;
-              state.isAuthenticated = !!data.user; // 只要有用户信息就认为已认证
+              state.isAuthenticated = !!data.tokens; // 只有存在token才认为已认证
               state.sessionExpiry = data.tokens?.expiresAt || null;
               state.error = data.tokens ? null : {
                 code: 'INCOMPLETE_AUTH',

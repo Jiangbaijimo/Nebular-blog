@@ -109,7 +109,7 @@ export function useOAuthState() {
       
       if (response.success && response.data) {
         // 更新全局认证状态
-        authStore.setAuthData(response.data);
+        useAuthStore.getState().setAuthData(response.data);
         
         return {
           status: 'success',

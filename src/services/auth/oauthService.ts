@@ -178,12 +178,8 @@ class OAuthService {
         console.warn('后端响应中缺少认证令牌，这可能是后端实现的问题');
         console.warn('实际响应数据:', actualData);
         
-        // 创建一个包含用户信息但没有tokens的响应
-        return {
-          user: actualData.user,
-          tokens: undefined,
-          session: undefined
-        } as LoginResponse;
+        // 如果没有token，则抛出错误，因为这是认证流程的关键部分
+        throw new Error('后端响应中缺少认证令牌');
       }
       
       // 构建标准的tokens对象
