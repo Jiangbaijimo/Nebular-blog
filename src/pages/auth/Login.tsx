@@ -1,6 +1,6 @@
 // 登录页面组件
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome, User } from 'lucide-react';
 import authAPI from '../../services/api/auth';
 import { oauthService } from '../../services/auth/oauthService';
