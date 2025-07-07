@@ -1,23 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Home,
-  BookOpen,
-  Edit,
-  Image,
   Users,
   Settings,
   BarChart3,
-  FileText,
-  Tag,
-  MessageSquare,
   Shield,
   Cloud,
   Palette,
   ChevronDown,
-  ChevronRight,
-  Folder,
-  FolderOpen
+  ChevronRight
 } from 'lucide-react';
 import { useRoleGuard } from '../auth/RoleGuard';
 import { cn } from '../../utils/common';
@@ -47,117 +38,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const { isAuthenticated, isAdmin, isEditor, hasPermission } = useRoleGuard();
-  const [expandedItems, setExpandedItems] = useState<string[]>(['blog', 'admin']);
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
-  // 菜单配置
+  // 管理后台菜单配置
   const menuItems: MenuItem[] = [
     {
-      id: 'home',
-      label: '首页',
-      icon: Home,
-      path: '/'
-    },
-    {
-      id: 'blog',
-      label: '博客管理',
-      icon: BookOpen,
+      id: 'admin-dashboard',
+      label: '仪表板',
+      icon: BarChart3,
+      path: '/admin',
       requireAuth: true,
-      children: [
-        {
-          id: 'blog-list',
-          label: '博客列表',
-          icon: FileText,
-          path: '/blog'
-        },
-        {
-          id: 'blog-drafts',
-          label: '草稿箱',
-          icon: FileText,
-          path: '/blog/drafts',
-          badge: 3
-        },
-        {
-          id: 'blog-categories',
-          label: '分类管理',
-          icon: Folder,
-          path: '/blog/categories',
-          requirePermissions: ['blog:manage']
-        },
-        {
-          id: 'blog-tags',
-          label: '标签管理',
-          icon: Tag,
-          path: '/blog/tags',
-          requirePermissions: ['blog:manage']
-        }
-      ]
+      requireRoles: ['admin']
     },
     {
-      id: 'media',
-      label: '媒体库',
-      icon: Image,
-      path: '/media',
+      id: 'admin-users',
+      label: '用户管理',
+      icon: Users,
+      path: '/admin/users',
       requireAuth: true,
-      badge: '新'
+      requireRoles: ['admin'],
+      requirePermissions: ['user:manage']
     },
     {
-      id: 'comments',
-      label: '评论管理',
-      icon: MessageSquare,
-      path: '/comments',
-      requireAuth: true,
-      requirePermissions: ['comment:manage'],
-      badge: 5
-    },
-    {
-      id: 'admin',
-      label: '系统管理',
+      id: 'admin-roles',
+      label: '角色权限',
       icon: Shield,
+      path: '/admin/roles',
       requireAuth: true,
-      requireRoles: ['admin', 'super_admin'],
-      children: [
-        {
-          id: 'admin-dashboard',
-          label: '仪表板',
-          icon: BarChart3,
-          path: '/admin'
-        },
-        {
-          id: 'admin-users',
-          label: '用户管理',
-          icon: Users,
-          path: '/admin/users',
-          requirePermissions: ['user:manage']
-        },
-        {
-          id: 'admin-roles',
-          label: '角色权限',
-          icon: Shield,
-          path: '/admin/roles',
-          requirePermissions: ['role:manage']
-        },
-        {
-          id: 'admin-cloud-functions',
-          label: '云函数',
-          icon: Cloud,
-          path: '/admin/cloud-functions',
-          requirePermissions: ['cloud_function:manage']
-        },
-        {
-          id: 'admin-themes',
-          label: '主题管理',
-          icon: Palette,
-          path: '/admin/themes',
-          requirePermissions: ['theme:manage']
-        },
-        {
-          id: 'admin-settings',
-          label: '系统设置',
-          icon: Settings,
-          path: '/admin/settings',
-          requirePermissions: ['system:manage']
-        }
-      ]
+      requireRoles: ['admin'],
+      requirePermissions: ['role:manage']
+    },
+    {
+      id: 'admin-cloud-functions',
+      label: '云函数',
+      icon: Cloud,
+      path: '/admin/cloud-functions',
+      requireAuth: true,
+      requireRoles: ['admin'],
+      requirePermissions: ['cloud_function:manage']
+    },
+    {
+      id: 'admin-themes',
+      label: '主题管理',
+      icon: Palette,
+      path: '/admin/themes',
+      requireAuth: true,
+      requireRoles: ['admin'],
+      requirePermissions: ['theme:manage']
+    },
+    {
+      id: 'admin-settings',
+      label: '系统设置',
+      icon: Settings,
+      path: '/admin/settings',
+      requireAuth: true,
+      requireRoles: ['admin'],
+      requirePermissions: ['system:manage']
     }
   ];
 

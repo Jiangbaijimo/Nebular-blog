@@ -7,26 +7,47 @@ import { useAuthStore } from '../../stores/auth';
 import { useRoleGuard } from '../auth/RoleGuard';
 import { cn } from '../../utils/common';
 
-interface MainLayoutProps {
-  children?: React.ReactNode;
+// 布局配置接口
+export interface LayoutConfig {
+  showHeader?: boolean;
   showSidebar?: boolean;
   showFooter?: boolean;
-  footerVariant?: 'default' | 'minimal' | 'admin';
+  headerProps?: {
+    showMenuButton?: boolean;
+    onMenuToggle?: () => void;
+    className?: string;
+  };
+  sidebarProps?: {
+    isOpen?: boolean;
+    onClose?: () => void;
+    className?: string;
+  };
+  footerProps?: {
+    variant?: 'default' | 'minimal' | 'admin';
+    className?: string;
+  };
+  containerClassName?: string;
+  mainClassName?: string;
+}
+
+interface MainLayoutProps extends LayoutConfig {
+  children?: React.ReactNode;
   className?: string;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
-  showSidebar = true,
-  showFooter = true,
-  footerVariant = 'default',
+  showHeader = true,
+  showSidebar = false,
+  showFooter = false,
+  headerProps = {},
+  sidebarProps = {},
+  footerProps = {},
+  containerClassName = 'min-h-screen bg-gray-50 dark:bg-gray-900',
+  mainClassName = 'flex-1 overflow-auto',
   className
 }) => {
-  const location = useLocation();
-  const { isAuthenticated } = useAuthStore();
-  const { isAdmin } = useRoleGuard();
-  
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // 检测移动端
@@ -44,55 +65,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // 根据路由决定布局配置
-  const getLayoutConfig = () => {
-    const path = location.pathname;
-    
-    // 认证页面
-    if (path.startsWith('/auth/')) {
-      return {
-        showSidebar: false,
-        showFooter: false,
-        containerClass: 'min-h-screen bg-gray-50 dark:bg-gray-900'
-      };
-    }
-    
-    // 管理后台
-    if (path.startsWith('/admin/')) {
-      return {
-        showSidebar: true,
-        showFooter: false,
-        footerVariant: 'admin' as const,
-        containerClass: 'min-h-screen bg-gray-50 dark:bg-gray-900'
-      };
-    }
-    
-
-    
-    // 首页
-    if (path === '/') {
-      return {
-        showSidebar: false,
-        showFooter: true,
-        footerVariant: 'default' as const,
-        containerClass: 'min-h-screen bg-white dark:bg-gray-900'
-      };
-    }
-    
-    // 默认布局
-    return {
-      showSidebar: isAuthenticated,
-      showFooter: true,
-      footerVariant: 'default' as const,
-      containerClass: 'min-h-screen bg-gray-50 dark:bg-gray-900'
-    };
-  };
-
-  const layoutConfig = getLayoutConfig();
-  const shouldShowSidebar = showSidebar && layoutConfig.showSidebar;
-  const shouldShowFooter = showFooter && layoutConfig.showFooter;
-  const currentFooterVariant = footerVariant || layoutConfig.footerVariant;
-
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -103,10 +75,28 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     }
   };
 
+  // 合并默认props和传入的props
+  const mergedHeaderProps = {
+    showMenuButton: showSidebar,
+    onMenuToggle: toggleSidebar,
+    ...headerProps
+  };
+
+  const mergedSidebarProps = {
+    isOpen: isSidebarOpen,
+    onClose: closeSidebar,
+    ...sidebarProps
+  };
+
+  const mergedFooterProps = {
+    variant: 'default' as const,
+    ...footerProps
+  };
+
   return (
-    <div className={cn(layoutConfig.containerClass, className)}>
+    <div className={cn(containerClassName, className)}>
       {/* 移动端遮罩 */}
-      {isMobile && isSidebarOpen && shouldShowSidebar && (
+      {isMobile && isSidebarOpen && showSidebar && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={closeSidebar}
@@ -115,17 +105,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       <div className="flex h-full">
         {/* 侧边栏 */}
-        {shouldShowSidebar && (
+        {showSidebar && (
           <div className={cn(
             'fixed md:relative z-50 h-full',
             isMobile ? 'inset-y-0 left-0' : ''
           )}>
             <Sidebar 
-              isOpen={isSidebarOpen}
-              onClose={closeSidebar}
+              {...mergedSidebarProps}
               className={cn(
                 'h-full',
-                isMobile && !isSidebarOpen && 'hidden'
+                isMobile && !isSidebarOpen && 'hidden',
+                mergedSidebarProps.className
               )}
             />
           </div>
@@ -134,19 +124,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         {/* 主内容区域 */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* 头部导航 */}
-          <Header 
-            onMenuToggle={toggleSidebar}
-            showMenuButton={shouldShowSidebar}
-          />
+          {showHeader && (
+            <Header {...mergedHeaderProps} />
+          )}
 
           {/* 主内容 */}
-          <main className="flex-1 overflow-auto">
+          <main className={cn(mainClassName)}>
             {children || <Outlet />}
           </main>
 
           {/* 底部 */}
-          {shouldShowFooter && (
-            <Footer variant={currentFooterVariant} />
+          {showFooter && (
+            <Footer {...mergedFooterProps} />
           )}
         </div>
       </div>
@@ -154,12 +143,78 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   );
 };
 
+// 预设布局配置
+export const LayoutPresets = {
+  // 认证页面布局
+  auth: {
+    showHeader: false,
+    showSidebar: false,
+    showFooter: false,
+    containerClassName: 'min-h-screen bg-gray-50 dark:bg-gray-900',
+    mainClassName: 'flex flex-col justify-center py-12 sm:px-6 lg:px-8'
+  } as LayoutConfig,
+
+  // 管理后台布局
+  admin: {
+    showHeader: true,
+    showSidebar: true,
+    showFooter: false,
+    containerClassName: 'min-h-screen bg-gray-50 dark:bg-gray-900',
+    mainClassName: 'flex-1 overflow-auto p-6',
+    headerProps: {
+      showMenuButton: true
+    }
+  } as LayoutConfig,
+
+  // 全屏布局（首页等）
+  fullscreen: {
+    showHeader: true,
+    showSidebar: false,
+    showFooter: true,
+    containerClassName: 'min-h-screen bg-white dark:bg-gray-900',
+    mainClassName: 'min-h-screen',
+    headerProps: {
+      showMenuButton: false
+    },
+    footerProps: {
+      variant: 'minimal' as const
+    }
+  } as LayoutConfig,
+
+  // 编辑器布局
+  editor: {
+    showHeader: true,
+    showSidebar: false,
+    showFooter: false,
+    containerClassName: 'h-screen bg-white dark:bg-gray-900 flex flex-col',
+    mainClassName: 'flex-1 overflow-hidden',
+    headerProps: {
+      showMenuButton: false
+    }
+  } as LayoutConfig,
+
+  // 博客页面布局
+  blog: {
+    showHeader: true,
+    showSidebar: false,
+    showFooter: true,
+    containerClassName: 'min-h-screen bg-white dark:bg-gray-900',
+    mainClassName: 'flex-1 overflow-auto',
+    headerProps: {
+      showMenuButton: false
+    },
+    footerProps: {
+      variant: 'default' as const
+    }
+  } as LayoutConfig
+};
+
 /**
  * 认证布局 - 用于登录、注册等页面
  */
 export const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <MainLayout {...LayoutPresets.auth}>
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -181,7 +236,7 @@ export const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }
           {children}
         </div>
       </div>
-    </div>
+    </MainLayout>
   );
 };
 
@@ -190,15 +245,9 @@ export const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }
  */
 export const EditorLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="h-screen bg-white dark:bg-gray-900 flex flex-col">
-      {/* 编辑器头部 */}
-      <Header showMenuButton={false} />
-      
-      {/* 编辑器主体 */}
-      <div className="flex-1 overflow-hidden">
-        {children}
-      </div>
-    </div>
+    <MainLayout {...LayoutPresets.editor}>
+      {children}
+    </MainLayout>
   );
 };
 
@@ -206,72 +255,10 @@ export const EditorLayout: React.FC<{ children: React.ReactNode }> = ({ children
  * 管理后台布局 - 用于管理页面
  */
 export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const closeSidebar = () => {
-    if (isMobile) {
-      setIsSidebarOpen(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* 移动端遮罩 */}
-      {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      <div className="flex h-screen">
-        {/* 管理侧边栏 */}
-        <div className={cn(
-          'fixed md:relative z-50 h-full',
-          isMobile ? 'inset-y-0 left-0' : ''
-        )}>
-          <Sidebar 
-            isOpen={isSidebarOpen}
-            onClose={closeSidebar}
-            className={cn(
-              'h-full',
-              isMobile && !isSidebarOpen && 'hidden'
-            )}
-          />
-        </div>
-
-        {/* 管理主内容 */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header 
-            onMenuToggle={toggleSidebar}
-            showMenuButton={true}
-          />
-          
-          <main className="flex-1 overflow-auto p-6">
-            {children}
-          </main>
-        </div>
-      </div>
-    </div>
+    <MainLayout {...LayoutPresets.admin}>
+      {children}
+    </MainLayout>
   );
 };
 
@@ -280,13 +267,20 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
  */
 export const FullscreenLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <Header showMenuButton={false} />
-      <main className="min-h-screen">
-        {children}
-      </main>
-      <Footer variant="minimal" />
-    </div>
+    <MainLayout {...LayoutPresets.fullscreen}>
+      {children}
+    </MainLayout>
+  );
+};
+
+/**
+ * 博客页面布局 - 用于博客文章页面
+ */
+export const BlogLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <MainLayout {...LayoutPresets.blog}>
+      {children}
+    </MainLayout>
   );
 };
 
