@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ResponsiveImage from '../../components/common/ResponsiveImage';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate } from '../../utils/date';
 
 interface PostData {
   id?: string;

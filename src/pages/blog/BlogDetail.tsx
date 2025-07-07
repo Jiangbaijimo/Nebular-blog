@@ -6,8 +6,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ResponsiveImage from '../../components/common/ResponsiveImage';
-import { formatDate, formatReadTime } from '../../utils/dateUtils';
-import { BlogPost } from './BlogHome';
+import { formatDate, formatReadTime } from '../../utils/date';
+import { SimpleBlogPost as BlogPost } from '../../types/blog';
 
 interface Comment {
   id: string;

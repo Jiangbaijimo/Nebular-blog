@@ -1,12 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/auth';
 import { useRoleGuard } from '../../components/auth/RoleGuard';
 import { cn } from '../../utils/common';
+import { 
+  LayoutDashboard, 
+  FileText, 
+  Users, 
+  Settings, 
+  Menu, 
+  X, 
+  LogOut,
+  Home,
+  Bell,
+  Search
+} from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { isAdmin } = useRoleGuard();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -24,9 +38,22 @@ const AdminLayout: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   const closeSidebar = () => {
     if (isMobile) {
       setIsSidebarOpen(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth/login');
+    } catch (error) {
+      console.error('登出失败:', error);
     }
   };
 
@@ -45,125 +72,170 @@ const AdminLayout: React.FC = () => {
     );
   }
 
+  // 导航菜单项
+  const navigationItems = [
+    {
+      name: '仪表板',
+      href: '/admin',
+      icon: LayoutDashboard,
+      current: location.pathname === '/admin'
+    },
+    {
+      name: '文章管理',
+      href: '/admin/blogs',
+      icon: FileText,
+      current: location.pathname === '/admin/blogs'
+    },
+    {
+      name: '用户管理',
+      href: '/admin/users',
+      icon: Users,
+      current: location.pathname === '/admin/users'
+    },
+    {
+      name: '媒体库',
+      href: '/admin/media',
+      icon: FileText,
+      current: location.pathname === '/admin/media'
+    },
+    {
+      name: '系统设置',
+      href: '/admin/settings',
+      icon: Settings,
+      current: location.pathname === '/admin/settings'
+    }
+  ];
+
   return (
-    <div className="flex h-full">
-      {/* Mobile overlay */}
-      {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={closeSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div className={cn(
-        'fixed md:relative z-50 h-full transition-transform duration-300 ease-in-out',
-        isMobile ? 'inset-y-0 left-0' : '',
-        isMobile && !isSidebarOpen ? '-translate-x-full' : 'translate-x-0'
-      )}>
-        <div className="flex h-full w-64 flex-col bg-white dark:bg-gray-800 shadow-lg">
-          {/* Sidebar Header */}
-          <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-              管理后台
-            </h1>
-            {isMobile && (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* 顶部导航栏 */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* 左侧 - Logo和菜单按钮 */}
+            <div className="flex items-center">
               <button
-                onClick={closeSidebar}
-                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={toggleSidebar}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 lg:hidden"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
-            )}
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
-            <a
-              href="/admin"
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 rounded-lg"
-            >
-              <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-              </svg>
-              仪表板
-            </a>
-            <a
-              href="/admin/posts"
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              文章管理
-            </a>
-            <a
-              href="/admin/categories"
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              分类管理
-            </a>
-            <a
-              href="/admin/users"
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-              </svg>
-              用户管理
-            </a>
-            <a
-              href="/admin/settings"
-              className="flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <svg className="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              系统设置
-            </a>
-          </nav>
-
-          {/* User Info & Logout */}
-          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center mb-3">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {user?.username?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user?.username}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  管理员
-                </p>
+              <div className="flex items-center ml-4 lg:ml-0">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  管理后台
+                </h1>
               </div>
             </div>
-            <button
-              onClick={logout}
-              className="w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            >
-              <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              退出登录
-            </button>
+
+            {/* 右侧 - 搜索、通知、用户菜单 */}
+            <div className="flex items-center space-x-4">
+              {/* 搜索框 */}
+              <div className="hidden md:block">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="搜索..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* 通知按钮 */}
+              <button className="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                <Bell className="h-6 w-6" />
+              </button>
+
+              {/* 返回首页按钮 */}
+              <Link
+                to="/"
+                className="p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                title="返回首页"
+              >
+                <Home className="h-6 w-6" />
+              </Link>
+
+              {/* 用户菜单 */}
+              <div className="flex items-center space-x-3">
+                <div className="hidden md:block text-right">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {user?.username || '未知用户'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    管理员
+                  </p>
+                </div>
+                <img
+                  className="h-8 w-8 rounded-full"
+                  src={user?.avatar || '/default-avatar.png'}
+                  alt={user?.username || '用户'}
+                />
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                  title="退出登录"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <Outlet />
+      <div className="flex">
+        {/* 侧边栏 */}
+        <aside
+          className={cn(
+            "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out",
+            isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+            "lg:translate-x-0 lg:static lg:inset-0 lg:top-16"
+          )}
+          style={{ top: '64px' }}
+        >
+          <div className="flex flex-col h-full pt-4">
+            {/* 导航菜单 */}
+            <nav className="flex-1 px-4 space-y-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={closeSidebar}
+                    className={cn(
+                      "flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+                      item.current
+                        ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 border-r-2 border-blue-700 dark:border-blue-200"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
+                    )}
+                  >
+                    <Icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </aside>
+
+        {/* 遮罩层 */}
+        {isMobile && isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
+
+        {/* 主内容区域 */}
+        <main className={cn(
+          "flex-1 min-h-screen transition-all duration-300",
+          "lg:ml-64"
+        )} style={{ paddingTop: '64px' }}>
+          <div className="p-6">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );

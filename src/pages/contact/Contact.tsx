@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { validateEmail, validatePhone } from '../../utils/validation';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate } from '../../utils/date';
 
 interface ContactForm {
   name: string;

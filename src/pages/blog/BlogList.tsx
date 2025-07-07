@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Calendar, User, Tag, Eye, Heart, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate } from '../../utils/date';
 
 interface BlogPost {
   id: string;

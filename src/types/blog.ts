@@ -197,6 +197,52 @@ export interface CommentUpdateRequest {
   status?: CommentStatus;
 }
 
+// 简化的博客类型定义（用于前端展示）
+export interface SimpleBlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string;
+  author: {
+    name: string;
+    avatar?: string;
+    bio?: string;
+  };
+  publishedAt: string;
+  updatedAt: string;
+  readTime: number;
+  tags: string[];
+  categories: string[];
+  status: 'published' | 'draft' | 'archived';
+  featured: boolean;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  seo: {
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string[];
+  };
+}
+
+export interface SimpleCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  postCount: number;
+  color?: string;
+}
+
+export interface SimpleTag {
+  id: string;
+  name: string;
+  slug: string;
+  postCount: number;
+  color?: string;
+}
+
 export interface BlogDraft {
   id: string;
   title: string;

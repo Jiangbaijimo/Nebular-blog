@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ResponsiveImage from '../../components/common/ResponsiveImage';
-import { formatDate } from '../../utils/dateUtils';
+import { formatDate } from '../../utils/date';
 
 interface Skill {
   id: string;

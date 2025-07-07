@@ -10,13 +10,38 @@ function App() {
   return (
     <Router>
       <AppInitializer>
-        <MainLayout>
-          <Routes>
-            {lazyRoutes.map((route, index) => (
+        <Routes>
+          {lazyRoutes.map((route, index) => {
+            // Admin路由完全独立，不使用MainLayout
+            if (route.path?.startsWith('/admin')) {
+              return (
+                <Route
+                  key={index}
+                  path={route.path}
+                  element={route.element}
+                >
+                  {route.children?.map((childRoute, childIndex) => (
+                    <Route
+                      key={childIndex}
+                      index={childRoute.index}
+                      path={childRoute.path}
+                      element={childRoute.element}
+                    />
+                  ))}
+                </Route>
+              );
+            }
+            
+            // 其他路由使用MainLayout
+            return (
               <Route
                 key={index}
                 path={route.path}
-                element={route.element}
+                element={
+                  <MainLayout>
+                    {route.element}
+                  </MainLayout>
+                }
               >
                 {route.children?.map((childRoute, childIndex) => (
                   <Route
@@ -27,10 +52,10 @@ function App() {
                   />
                 ))}
               </Route>
-            ))}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </MainLayout>
+            );
+          })}
+          <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
+        </Routes>
       </AppInitializer>
     </Router>
   );

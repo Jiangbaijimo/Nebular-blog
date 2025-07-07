@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ResponsiveImage from '../../components/common/ResponsiveImage';
-import { formatDate, formatRelativeTime } from '../../utils/dateUtils';
+import { formatDate, formatRelativeTime } from '../../utils/date';
 
 interface Post {
   id: string;

@@ -5,8 +5,8 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { formatDate, formatReadTime } from '../../utils/dateUtils';
-import { BlogPost, Category, Tag } from './BlogHome';
+import { formatDate, formatReadTime } from '../../utils/date';
+import { SimpleBlogPost as BlogPost, SimpleCategory as Category, SimpleTag as Tag } from '../../types/blog';
 
 interface ArchiveGroup {
   key: string;
