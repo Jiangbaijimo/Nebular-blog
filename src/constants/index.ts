@@ -9,9 +9,6 @@ export * from './routes';
 // 应用配置常量
 export * from './app';
 
-// 主题配置常量
-export * from './theme';
-
 // 重新导出主要常量对象
 export {
   API_ENDPOINTS,
@@ -47,18 +44,3 @@ export {
   REGEX_PATTERNS,
   ANIMATION_CONFIG,
 } from './app';
-
-export {
-  COLOR_PALETTE,
-  LIGHT_THEME,
-  DARK_THEME,
-  TYPOGRAPHY,
-  SPACING,
-  BORDER_RADIUS,
-  ANIMATIONS,
-  BREAKPOINTS,
-  Z_INDEX,
-  THEME_CONFIG,
-  DEFAULT_THEME,
-  THEME_TRANSITION_DURATION,
-} from './theme';
