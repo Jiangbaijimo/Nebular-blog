@@ -3,7 +3,7 @@ import { appDataDir, join, downloadDir, documentDir } from '@tauri-apps/api/path
 import { createDir, exists, writeFile, readFile, removeFile, readDir } from '@tauri-apps/api/fs';
 import { save, open } from '@tauri-apps/api/dialog';
 import { sqliteManager, BlogDraft, ImageCache, UserConfig } from './sqliteManager';
-import { offlineStorage } from './offlineStorage';
+import { offlineStorageService } from './offlineStorageService';
 
 // 备份类型
 export type BackupType = 'full' | 'incremental' | 'drafts-only' | 'images-only' | 'config-only';

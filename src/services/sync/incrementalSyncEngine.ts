@@ -1,5 +1,5 @@
 import { sqliteManager, BlogDraft, ImageCache, SyncStatus } from '../database/sqliteManager';
-import { offlineStorage } from '../database/offlineStorage';
+import { offlineStorageService } from '../database/offlineStorageService';
 import { apiClient } from '../api/apiClient';
 import { EventEmitter } from 'events';
 
@@ -554,7 +554,7 @@ class IncrementalSyncEngine extends EventEmitter {
         if (image) {
           // 删除本地文件
           try {
-            await offlineStorage.deleteImageOffline?.(delta.entityId);
+            await offlineStorageService.deleteImageOffline(delta.entityId);
           } catch (error) {
             console.warn('删除本地图片文件失败:', error);
           }

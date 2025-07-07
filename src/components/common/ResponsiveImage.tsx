@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { cdnManager } from '../../services/cdn/cdnManager';
-import LazyImage from './LazyImage';
+import LazyImage from '../ui/LazyImage';
 import type { ImageTransform } from '../../services/cdn/cdnManager';
 
 interface ResponsiveImageProps {
