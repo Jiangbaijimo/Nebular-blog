@@ -196,6 +196,9 @@ const Login: React.FC = () => {
     provider => oauthService.isProviderAvailable(provider)
   );
 
+  // 检查是否启用邮箱密码登录
+  const isEmailPasswordLoginEnabled = import.meta.env.VITE_ENABLE_EMAIL_PASSWORD_LOGIN === 'true';
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -208,7 +211,7 @@ const Login: React.FC = () => {
             登录账户
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            使用 GitHub 或 Google 账户登录
+            {isEmailPasswordLoginEnabled ? '使用邮箱密码或第三方账户登录' : '使用 GitHub 或 Google 账户登录'}
           </p>
         </div>
 
@@ -221,7 +224,8 @@ const Login: React.FC = () => {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {isEmailPasswordLoginEnabled && (
+            <form className="space-y-6" onSubmit={handleSubmit}>
             {/* 邮箱输入 */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -330,24 +334,27 @@ const Login: React.FC = () => {
               )}
             </button>
           </form>
+          )}
 
           {/* OAuth登录 */}
           {availableProviders.length > 0 && (
             <>
-              <div className="mt-6">
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                      或使用第三方登录
-                    </span>
+              {isEmailPasswordLoginEnabled && (
+                <div className="mt-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                        或使用第三方登录
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="mt-6 grid grid-cols-1 gap-3">
+              <div className={`${isEmailPasswordLoginEnabled ? 'mt-6' : 'mt-0'} grid grid-cols-1 gap-3`}>
                 {availableProviders.map(provider => (
                   <button
                     key={provider}
