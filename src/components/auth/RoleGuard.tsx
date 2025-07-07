@@ -117,20 +117,20 @@ export const RequireAdmin: React.FC<{ children: React.ReactNode; fallback?: Reac
       return <>{fallback}</>;
     }
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="text-6xl text-gray-400 mb-4">🚫</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">访问被拒绝</h1>
-          <p className="text-gray-600 mb-4">您没有权限访问管理后台，只有管理员才能访问此页面</p>
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            返回上一页
-          </button>
-        </div>
-      </div>
-    );
+       <div className="flex items-center justify-center min-h-screen bg-gray-50">
+         <div className="text-center">
+           <div className="text-6xl text-gray-400 mb-4">🔍</div>
+           <h1 className="text-2xl font-bold text-gray-900 mb-2">神秘的登录入口</h1>
+           <p className="text-gray-600 mb-4">你发现了神秘的登录入口，但这里什么也没有</p>
+           <button
+             onClick={() => window.history.back()}
+             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+           >
+             返回上一页
+           </button>
+         </div>
+       </div>
+     );
   }
 
   return <>{children}</>;
