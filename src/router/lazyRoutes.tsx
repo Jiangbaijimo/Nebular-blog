@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { RouteObject } from 'react-router-dom';
+import { RequireAdmin } from '../components/auth/RoleGuard';
 import Loading from '../components/ui/Loading';
 
 // 懒加载组件包装器
@@ -135,9 +136,11 @@ export const lazyRoutes: RouteObject[] = [
   {
     path: '/admin',
     element: (
-      <LazyWrapper>
-        <AdminLayout />
-      </LazyWrapper>
+      <RequireAdmin>
+        <LazyWrapper>
+          <AdminLayout />
+        </LazyWrapper>
+      </RequireAdmin>
     ),
     children: [
       {

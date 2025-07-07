@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../../stores/auth';
+import { useAuthStore } from '@/stores/auth';
 import { rbacService } from '../../services/auth/rbac';
 import { Permission, Role } from '../../types/auth';
 
@@ -101,14 +101,39 @@ export const RequireAdmin: React.FC<{ children: React.ReactNode; fallback?: Reac
   children,
   fallback
 }) => {
-  return (
-    <RoleGuard
-      requiredRoles={['admin', 'super_admin']}
-      fallback={fallback}
-    >
-      {children}
-    </RoleGuard>
-  );
+  const { isAuthenticated, user } = useAuthStore();
+  const location = useLocation();
+
+  // 如果未认证，重定向到登录页
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  }
+
+  // 检查用户是否有管理员角色
+  const isAdmin = user.roles?.some(role => role.code === 'admin') || false;
+
+  if (!isAdmin) {
+    if (fallback) {
+      return <>{fallback}</>;
+    }
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="text-6xl text-gray-400 mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">访问被拒绝</h1>
+          <p className="text-gray-600 mb-4">您没有权限访问管理后台，只有管理员才能访问此页面</p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            返回上一页
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
 };
 
 /**
@@ -227,7 +252,8 @@ export const useRoleGuard = () => {
   };
 
   const isAdmin = (): boolean => {
-    return hasAnyRole(['admin', 'super_admin']);
+    if (!isAuthenticated || !user) return false;
+    return user.roles?.some(role => role.code === 'admin') || false;
   };
 
   const isEditor = (): boolean => {

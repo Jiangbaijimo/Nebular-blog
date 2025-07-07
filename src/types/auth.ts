@@ -17,6 +17,7 @@ export interface User {
   phoneVerified: boolean;
   status: 'active' | 'inactive' | 'suspended' | 'banned';
   role: UserRole;
+  roles: UserRole[];
   permissions: string[];
   preferences: UserPreferences;
   stats: UserStats;
@@ -29,6 +30,7 @@ export interface User {
 // 用户角色
 export interface UserRole {
   id: string;
+  code: string;
   name: string;
   displayName: string;
   description?: string;
