@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 import { authAPI } from '../../services/api/auth';
 import { useAuthStore } from '../../stores/auth';
 import { LoadingSpinner } from '../ui/Loading';
-import SystemSetup from '../../pages/setup/SystemSetup';
 import { motion } from 'framer-motion';
 import { FiServer, FiAlertCircle } from 'react-icons/fi';
 
@@ -136,7 +135,32 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
 
   // 需要初始化
   if (initStatus && !initStatus.isInitialized && initStatus.requiresSetup) {
-    return <SystemSetup />;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiServer className="text-white text-2xl" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            系统需要初始化
+          </h2>
+          <p className="text-gray-600 mb-6">
+            系统尚未完成初始化设置，请联系管理员进行配置。
+          </p>
+          <button
+            onClick={handleRetry}
+            className="w-full px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+          >
+            重新检查
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   // 系统已初始化且认证状态已检查，渲染子组件

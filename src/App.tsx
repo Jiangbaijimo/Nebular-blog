@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazyRoutes } from './router/lazyRoutes';
 import { MainLayout } from './components/layout/MainLayout';
 import AppInitializer from './components/app/AppInitializer';
-import NotFound from './pages/error/NotFound';
 import "./App.css";
 
 function App() {
@@ -53,9 +52,7 @@ function App() {
                 ))}
               </Route>
             );
-          })}
-          <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
-        </Routes>
+          })}        </Routes>
       </AppInitializer>
     </Router>
   );

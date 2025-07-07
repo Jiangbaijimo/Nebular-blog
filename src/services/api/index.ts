@@ -40,7 +40,7 @@ export type {
   ResetPasswordRequest,
   ChangePasswordRequest,
   OAuthLoginRequest,
-  UserProfile,
+  ProfileUpdateRequest,
   UserPreferences,
 } from '../../types/auth';
 

@@ -10,18 +10,17 @@ const LazyWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 // 懒加载页面组件
+// 首页
 const HomePage = React.lazy(() => import('../pages/home/HomePage'));
+
+// 博客页面
 const BlogList = React.lazy(() => import('../pages/blog/BlogList'));
 const BlogDetail = React.lazy(() => import('../pages/blog/BlogDetail'));
 const BlogEditor = React.lazy(() => import('../pages/blog/BlogEditor'));
 
 // 认证页面
-const Login = React.lazy(() => import('../pages/auth/Login'));
-const SimpleLogin = React.lazy(() => import('../pages/auth/SimpleLogin'));
-const OAuthCallback = React.lazy(() => import('../pages/auth/OAuthCallback'));
-
-// 系统设置页面
-const SystemSetup = React.lazy(() => import('../pages/setup/SystemSetup'));
+const Login = React.lazy(() => import('../pages/auth/login'));
+const OAuthCallback = React.lazy(() => import('../pages/auth/oauthcallback'));
 
 // 管理后台页面
 const AdminLayout = React.lazy(() => import('../pages/admin/AdminLayout'));
@@ -32,28 +31,41 @@ const MediaLibrary = React.lazy(() => import('../pages/admin/MediaLibrary'));
 const CloudFunctionManagement = React.lazy(() => import('../pages/admin/CloudFunctionManagement'));
 const SystemSettings = React.lazy(() => import('../pages/admin/SystemSettings'));
 
-// 用户页面
-const UserProfile = React.lazy(() => import('../pages/user/UserProfile'));
-const UserSettings = React.lazy(() => import('../pages/user/UserSettings'));
-
-// 错误页面
-const NotFound = React.lazy(() => import('../pages/error/NotFound'));
-const ServerError = React.lazy(() => import('../pages/error/ServerError'));
+// 简单的404页面组件
+const NotFound: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="text-center">
+      <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
+      <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">页面未找到</p>
+      <a href="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+        返回首页
+      </a>
+    </div>
+  </div>
+);
 
 // 路由预加载函数
 export const preloadRoute = (routeName: string) => {
   switch (routeName) {
+    // 首页
     case 'home':
       return import('../pages/home/HomePage');
+    
+    // 博客相关
     case 'blog-list':
       return import('../pages/blog/BlogList');
     case 'blog-detail':
       return import('../pages/blog/BlogDetail');
     case 'blog-editor':
       return import('../pages/blog/BlogEditor');
+    
+    // 认证相关
     case 'login':
-      return import('../pages/auth/Login');
-
+      return import('../pages/auth/login');
+    case 'oauth-callback':
+      return import('../pages/auth/oauthcallback');
+    
+    // 管理后台
     case 'admin':
       return import('../pages/admin/AdminLayout');
     case 'admin-dashboard':
@@ -68,10 +80,7 @@ export const preloadRoute = (routeName: string) => {
       return import('../pages/admin/CloudFunctionManagement');
     case 'system-settings':
       return import('../pages/admin/SystemSettings');
-    case 'user-profile':
-      return import('../pages/user/UserProfile');
-    case 'user-settings':
-      return import('../pages/user/UserSettings');
+    
     default:
       return Promise.resolve();
   }
@@ -79,6 +88,7 @@ export const preloadRoute = (routeName: string) => {
 
 // 路由配置
 export const lazyRoutes: RouteObject[] = [
+  // 首页路由 (/)
   {
     path: '/',
     element: (
@@ -87,6 +97,8 @@ export const lazyRoutes: RouteObject[] = [
       </LazyWrapper>
     ),
   },
+  
+  // 博客相关路由 (/blog)
   {
     path: '/blog',
     element: (
@@ -119,20 +131,13 @@ export const lazyRoutes: RouteObject[] = [
       </LazyWrapper>
     ),
   },
+  
+  // 认证相关路由 (/auth)
   {
     path: '/auth/login',
     element: (
       <LazyWrapper>
         <Login />
-      </LazyWrapper>
-    ),
-  },
-
-  {
-    path: '/auth/simple-login',
-    element: (
-      <LazyWrapper>
-        <SimpleLogin />
       </LazyWrapper>
     ),
   },
@@ -144,14 +149,8 @@ export const lazyRoutes: RouteObject[] = [
       </LazyWrapper>
     ),
   },
-  {
-    path: '/setup',
-    element: (
-      <LazyWrapper>
-        <SystemSetup />
-      </LazyWrapper>
-    ),
-  },
+  
+  // 管理后台路由 (/admin)
   {
     path: '/admin',
     element: (
@@ -210,22 +209,8 @@ export const lazyRoutes: RouteObject[] = [
       },
     ],
   },
-  {
-    path: '/user/profile',
-    element: (
-      <LazyWrapper>
-        <UserProfile />
-      </LazyWrapper>
-    ),
-  },
-  {
-    path: '/user/settings',
-    element: (
-      <LazyWrapper>
-        <UserSettings />
-      </LazyWrapper>
-    ),
-  },
+  
+  // 404错误页面
   {
     path: '/404',
     element: (
@@ -234,14 +219,8 @@ export const lazyRoutes: RouteObject[] = [
       </LazyWrapper>
     ),
   },
-  {
-    path: '/500',
-    element: (
-      <LazyWrapper>
-        <ServerError />
-      </LazyWrapper>
-    ),
-  },
+  
+  // 通配符路由，必须放在最后
   {
     path: '*',
     element: (

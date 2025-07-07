@@ -21,23 +21,10 @@ export const AUTH_ROUTES = {
   OAUTH_CALLBACK: '/auth/callback/:provider',
 } as const;
 
-// 用户路由
-export const USER_ROUTES = {
-  PROFILE: '/profile',
-  SETTINGS: '/profile/settings',
-  SECURITY: '/profile/security',
-  NOTIFICATIONS: '/profile/notifications',
-  ACTIVITIES: '/profile/activities',
-  SESSIONS: '/profile/sessions',
-} as const;
-
-// 编辑器路由
-export const EDITOR_ROUTES = {
-  NEW: '/editor/new',
-  EDIT: '/editor/:id',
-  PREVIEW: '/editor/:id/preview',
-  DRAFTS: '/editor/drafts',
-  TEMPLATES: '/editor/templates',
+// 博客编辑路由（整合到博客路由中）
+export const BLOG_EDITOR_ROUTES = {
+  NEW: '/blog/edit',
+  EDIT: '/blog/edit/:id',
 } as const;
 
 // 管理后台路由
@@ -108,8 +95,7 @@ export const ADMIN_ROUTES = {
 export const ROUTES = {
   ...PUBLIC_ROUTES,
   ...AUTH_ROUTES,
-  ...USER_ROUTES,
-  ...EDITOR_ROUTES,
+  ...BLOG_EDITOR_ROUTES,
   ...ADMIN_ROUTES,
 } as const;
 
@@ -123,8 +109,7 @@ export const ROUTE_PERMISSIONS = {
   
   // 需要登录的路由
   AUTHENTICATED: [
-    ...Object.values(USER_ROUTES),
-    ...Object.values(EDITOR_ROUTES),
+    ...Object.values(BLOG_EDITOR_ROUTES),
   ],
   
   // 管理员路由
@@ -132,10 +117,8 @@ export const ROUTE_PERMISSIONS = {
   
   // 编辑者及以上权限
   EDITOR_AND_ABOVE: [
-    EDITOR_ROUTES.NEW,
-    EDITOR_ROUTES.EDIT,
-    EDITOR_ROUTES.PREVIEW,
-    EDITOR_ROUTES.DRAFTS,
+    BLOG_EDITOR_ROUTES.NEW,
+    BLOG_EDITOR_ROUTES.EDIT,
     ADMIN_ROUTES.BLOG_MANAGEMENT,
     ADMIN_ROUTES.BLOG_CREATE,
     ADMIN_ROUTES.BLOG_EDIT,
@@ -158,34 +141,6 @@ export const NAVIGATION_MENUS = {
       label: '博客',
       path: PUBLIC_ROUTES.BLOG,
       icon: 'BookOpen',
-    },
-    {
-      key: 'search',
-      label: '搜索',
-      path: PUBLIC_ROUTES.SEARCH,
-      icon: 'Search',
-    },
-  ],
-  
-  // 用户菜单
-  USER: [
-    {
-      key: 'profile',
-      label: '个人资料',
-      path: USER_ROUTES.PROFILE,
-      icon: 'User',
-    },
-    {
-      key: 'settings',
-      label: '设置',
-      path: USER_ROUTES.SETTINGS,
-      icon: 'Settings',
-    },
-    {
-      key: 'notifications',
-      label: '通知',
-      path: USER_ROUTES.NOTIFICATIONS,
-      icon: 'Bell',
     },
   ],
   
@@ -323,7 +278,7 @@ export const ROUTE_META = {
     requiresAuth: true,
     requiredRole: 'admin',
   },
-  [EDITOR_ROUTES.NEW]: {
+  [BLOG_EDITOR_ROUTES.NEW]: {
     title: '创建文章',
     description: '创建新的博客文章',
     keywords: ['创建', '文章', '编辑器'],

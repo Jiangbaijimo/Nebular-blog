@@ -10,7 +10,7 @@ import type {
   ResetPasswordRequest,
   ChangePasswordRequest,
   OAuthLoginRequest,
-  UserProfile,
+  ProfileUpdateRequest,
   UserPreferences,
 } from '../../types/auth';
 
@@ -99,7 +99,7 @@ class AuthAPI {
   /**
    * 更新用户资料
    */
-  async updateProfile(profile: Partial<UserProfile>): Promise<User> {
+  async updateProfile(profile: Partial<ProfileUpdateRequest>): Promise<User> {
     return httpClient.put<User>(API_ENDPOINTS.AUTH.PROFILE, profile);
   }
 
