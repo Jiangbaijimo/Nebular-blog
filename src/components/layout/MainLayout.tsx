@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Header } from './Header';
+import Header from './Header';
 import { Sidebar } from './Sidebar';
 import { Footer } from './Footer';
 import { useAuthStore } from '../../stores/auth';
