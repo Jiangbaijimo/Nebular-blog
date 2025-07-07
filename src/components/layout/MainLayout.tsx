@@ -61,7 +61,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     if (path.startsWith('/admin/')) {
       return {
         showSidebar: true,
-        showFooter: true,
+        showFooter: false,
         footerVariant: 'admin' as const,
         containerClass: 'min-h-screen bg-gray-50 dark:bg-gray-900'
       };
@@ -276,8 +276,6 @@ export const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children 
           <main className="flex-1 overflow-auto p-6">
             {children}
           </main>
-          
-          <Footer variant="admin" />
         </div>
       </div>
     </div>
