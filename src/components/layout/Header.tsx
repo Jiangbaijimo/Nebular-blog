@@ -132,10 +132,8 @@ export const Header: React.FC<HeaderProps> = ({
     setHoverTimeout(timeout);
   };
 
-  // 导航菜单项（保留原有的写作功能）
-  const navItems = [
-    { path: '/editor', label: '写作', icon: Edit, requireAuth: true },
-  ];
+  // 导航菜单项（已移除写作功能）
+  const navItems: any[] = [];
 
   // 管理员菜单项（已隐藏，通过双击Logo进入）
   // const adminNavItems = [

@@ -70,12 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           path: '/blog'
         },
         {
-          id: 'blog-editor',
-          label: '写作',
-          icon: Edit,
-          path: '/editor'
-        },
-        {
           id: 'blog-drafts',
           label: '草稿箱',
           icon: FileText,

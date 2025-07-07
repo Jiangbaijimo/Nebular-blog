@@ -16,7 +16,6 @@ const HomePage = React.lazy(() => import('../pages/home/HomePage'));
 // 博客页面
 const BlogList = React.lazy(() => import('../pages/blog/BlogList'));
 const BlogDetail = React.lazy(() => import('../pages/blog/BlogDetail'));
-const BlogEditor = React.lazy(() => import('../pages/blog/BlogEditor'));
 
 // 认证页面
 const Login = React.lazy(() => import('../pages/auth/login'));
@@ -56,8 +55,6 @@ export const preloadRoute = (routeName: string) => {
       return import('../pages/blog/BlogList');
     case 'blog-detail':
       return import('../pages/blog/BlogDetail');
-    case 'blog-editor':
-      return import('../pages/blog/BlogEditor');
     
     // 认证相关
     case 'login':
@@ -112,22 +109,6 @@ export const lazyRoutes: RouteObject[] = [
     element: (
       <LazyWrapper>
         <BlogDetail />
-      </LazyWrapper>
-    ),
-  },
-  {
-    path: '/editor',
-    element: (
-      <LazyWrapper>
-        <BlogEditor />
-      </LazyWrapper>
-    ),
-  },
-  {
-    path: '/editor/:id',
-    element: (
-      <LazyWrapper>
-        <BlogEditor />
       </LazyWrapper>
     ),
   },
@@ -276,15 +257,14 @@ export class RoutePreloader {
   // 预加载用户可能访问的路由（基于当前路由）
   static async preloadLikelyRoutes(currentRoute: string): Promise<void> {
     const routeMap: Record<string, string[]> = {
-      'home': ['blog-list', 'blog-editor', 'login'],
-      'blog-list': ['blog-detail', 'blog-editor'],
-      'blog-detail': ['blog-list', 'blog-editor'],
-      'blog-editor': ['blog-list', 'media-library'],
+      'home': ['blog-list', 'login'],
+      'blog-list': ['blog-detail'],
+      'blog-detail': ['blog-list'],
       'login': ['home'],
       'admin-dashboard': ['blog-management', 'user-management', 'media-library'],
-      'blog-management': ['blog-editor', 'media-library'],
+      'blog-management': ['media-library'],
       'user-management': ['user-profile'],
-      'media-library': ['blog-editor', 'blog-management'],
+      'media-library': ['blog-management'],
     };
 
     const likelyRoutes = routeMap[currentRoute] || [];

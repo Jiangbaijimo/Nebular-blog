@@ -67,14 +67,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       };
     }
     
-    // 编辑器页面
-    if (path.startsWith('/editor')) {
-      return {
-        showSidebar: false,
-        showFooter: false,
-        containerClass: 'h-screen bg-white dark:bg-gray-900'
-      };
-    }
+
     
     // 首页
     if (path === '/') {

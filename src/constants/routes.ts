@@ -21,11 +21,7 @@ export const AUTH_ROUTES = {
   OAUTH_CALLBACK: '/auth/callback/:provider',
 } as const;
 
-// 博客编辑路由（整合到博客路由中）
-export const BLOG_EDITOR_ROUTES = {
-  NEW: '/blog/edit',
-  EDIT: '/blog/edit/:id',
-} as const;
+
 
 // 管理后台路由
 export const ADMIN_ROUTES = {
@@ -95,7 +91,6 @@ export const ADMIN_ROUTES = {
 export const ROUTES = {
   ...PUBLIC_ROUTES,
   ...AUTH_ROUTES,
-  ...BLOG_EDITOR_ROUTES,
   ...ADMIN_ROUTES,
 } as const;
 
@@ -108,17 +103,13 @@ export const ROUTE_PERMISSIONS = {
   GUEST_ONLY: Object.values(AUTH_ROUTES),
   
   // 需要登录的路由
-  AUTHENTICATED: [
-    ...Object.values(BLOG_EDITOR_ROUTES),
-  ],
+  AUTHENTICATED: [],
   
   // 管理员路由
   ADMIN_ONLY: Object.values(ADMIN_ROUTES),
   
   // 编辑者及以上权限
   EDITOR_AND_ABOVE: [
-    BLOG_EDITOR_ROUTES.NEW,
-    BLOG_EDITOR_ROUTES.EDIT,
     ADMIN_ROUTES.BLOG_MANAGEMENT,
     ADMIN_ROUTES.BLOG_CREATE,
     ADMIN_ROUTES.BLOG_EDIT,
@@ -278,10 +269,5 @@ export const ROUTE_META = {
     requiresAuth: true,
     requiredRole: 'admin',
   },
-  [BLOG_EDITOR_ROUTES.NEW]: {
-    title: '创建文章',
-    description: '创建新的博客文章',
-    keywords: ['创建', '文章', '编辑器'],
-    requiresAuth: true,
-  },
+
 } as const;
