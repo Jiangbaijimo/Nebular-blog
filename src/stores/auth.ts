@@ -265,7 +265,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               });
 
               if (response.success) {
-                const { user, tokens, session, twoFactorRequired, twoFactorToken } = response.data;
+                // 根据API响应结构，数据可能在response.data.data中
+                const responseData = response.data?.data || response.data;
+                const { user, tokens, session, twoFactorRequired, twoFactorToken } = responseData;
 
                 if (twoFactorRequired) {
                   set((state) => {
@@ -399,7 +401,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               });
 
               if (response.success) {
-                const { user, tokens, session } = response.data;
+                // 根据API响应结构，数据可能在response.data.data中
+                const responseData = response.data?.data || response.data;
+                const { user, tokens, session } = responseData;
 
                 httpClient.setAuthTokens(tokens);
 
@@ -528,8 +532,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               const response = await httpClient.put(API_ENDPOINTS.AUTH.PROFILE, userData);
 
               if (response.success) {
+                // 根据API响应结构，用户数据可能在response.data.data中
+                const userData = response.data?.data || response.data;
                 set((state) => {
-                  state.user = { ...state.user, ...response.data };
+                  state.user = { ...state.user, ...userData };
                   state.isLoading = false;
                 });
               }
@@ -552,8 +558,14 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               const response = await httpClient.get(API_ENDPOINTS.AUTH.PROFILE);
               
               if (response.success) {
+                // 根据API响应结构，用户数据在response.data.data中
+                const userData = response.data?.data || response.data;
                 set((state) => {
-                  state.user = response.data;
+                  state.user = userData;
+                  // 确保认证状态正确设置
+                  if (userData && state.tokens) {
+                    state.isAuthenticated = true;
+                  }
                 });
               }
             } catch (error) {
@@ -574,7 +586,8 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               });
 
               if (response.success) {
-                const newTokens = response.data;
+                // 根据API响应结构，token数据可能在response.data.data中
+                const newTokens = response.data?.data || response.data;
                 httpClient.setAuthTokens(newTokens);
 
                 set((state) => {
@@ -605,8 +618,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               const response = await httpClient.post(API_ENDPOINTS.AUTH.EXTEND_SESSION);
               
               if (response.success) {
+                // 根据API响应结构，会话数据可能在response.data.data中
+                const sessionData = response.data?.data || response.data;
                 set((state) => {
-                  state.sessionExpiry = response.data.expiresAt;
+                  state.sessionExpiry = sessionData.expiresAt;
                 });
               }
             } catch (error) {
@@ -646,7 +661,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               });
 
               if (response.success) {
-                const { user, tokens, session } = response.data;
+                // 根据API响应结构，数据可能在response.data.data中
+                const responseData = response.data?.data || response.data;
+                const { user, tokens, session } = responseData;
                 httpClient.setAuthTokens(tokens);
 
                 set((state) => {

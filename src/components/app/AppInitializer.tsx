@@ -26,7 +26,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const [retryCount, setRetryCount] = useState(0);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
-  const { checkAuthStatus } = useAuthStore();
+  const { initialize } = useAuthStore();
 
   const checkInitialization = async () => {
     try {
@@ -40,11 +40,11 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
       if (status.isInitialized && !authInitialized && !isCheckingAuth) {
         setIsCheckingAuth(true);
         try {
-          await checkAuthStatus();
+          await initialize();
           setAuthInitialized(true);
         } catch (authError) {
-          console.warn('认证状态检查失败:', authError);
-          // 认证检查失败不影响应用启动
+          console.warn('认证状态初始化失败:', authError);
+          // 认证初始化失败不影响应用启动
           setAuthInitialized(true);
         } finally {
           setIsCheckingAuth(false);

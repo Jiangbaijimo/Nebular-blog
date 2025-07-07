@@ -111,6 +111,13 @@ export function useOAuthState() {
         // 更新全局认证状态
         useAuthStore.getState().setAuthData(response.data);
         
+        // 刷新用户信息以确保数据完整
+        try {
+          await useAuthStore.getState().refreshUserInfo();
+        } catch (error) {
+          console.warn('刷新用户信息失败:', error);
+        }
+        
         return {
           status: 'success',
           message: '登录成功，正在跳转...',
