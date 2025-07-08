@@ -227,14 +227,50 @@ class BlogAPI {
   // ==================== 博客标签管理 ====================
 
   /**
-   * 获取所有标签
+   * 获取所有标签 - 从博客数据中提取
    */
   async getTags(): Promise<BlogTag[]> {
-    return httpClient.get<BlogTag[]>(API_ENDPOINTS.BLOG.TAGS, { skipAuth: true });
+    try {
+      // 获取所有博客数据来提取标签
+      const response = await this.getBlogs({ page: 1, limit: 1000 });
+      const blogs = Array.isArray(response?.data) ? response.data : [];
+      
+      // 提取所有标签并去重
+      const tagMap = new Map<string, BlogTag>();
+      
+      blogs.forEach(blog => {
+        if (blog.tags && Array.isArray(blog.tags)) {
+          blog.tags.forEach(tag => {
+            if (typeof tag === 'string') {
+              // 如果标签是字符串，创建简单的标签对象
+              if (!tagMap.has(tag)) {
+                tagMap.set(tag, {
+                  id: tag,
+                  name: tag,
+                  slug: tag.toLowerCase().replace(/\s+/g, '-'),
+                  color: '#3B82F6',
+                  description: '',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString()
+                });
+              }
+            } else if (tag && typeof tag === 'object') {
+              // 如果标签是对象，直接使用
+              tagMap.set(tag.id || tag.name, tag as BlogTag);
+            }
+          });
+        }
+      });
+      
+      return Array.from(tagMap.values());
+    } catch (error) {
+      console.error('获取标签失败:', error);
+      return [];
+    }
   }
 
   /**
-   * 创建标签
+   * 创建标签 - 标签通过博客创建时自动生成
    */
   async createTag(data: {
     name: string;
@@ -242,11 +278,12 @@ class BlogAPI {
     color?: string;
     description?: string;
   }): Promise<BlogTag> {
-    return httpClient.post<BlogTag>(API_ENDPOINTS.BLOG.TAGS, data);
+    // 标签不能独立创建，只能通过博客文章创建时自动生成
+    throw new Error('标签不能独立创建，请在创建博客时添加标签');
   }
 
   /**
-   * 更新标签
+   * 更新标签 - 不支持独立更新标签
    */
   async updateTag(
     id: string,
@@ -257,47 +294,69 @@ class BlogAPI {
       description: string;
     }>
   ): Promise<BlogTag> {
-    return httpClient.put<BlogTag>(`${API_ENDPOINTS.BLOG.TAGS}/${id}`, data);
+    // 标签不能独立更新
+    throw new Error('标签不能独立更新，请通过编辑博客文章来管理标签');
   }
 
   /**
-   * 删除标签
+   * 删除标签 - 不支持独立删除标签
    */
   async deleteTag(id: string): Promise<void> {
-    return httpClient.delete(`${API_ENDPOINTS.BLOG.TAGS}/${id}`);
+    // 标签不能独立删除
+    throw new Error('标签不能独立删除，请通过编辑博客文章来管理标签');
   }
 
   /**
-   * 获取标签下的博客
+   * 获取标签下的博客 - 通过博客列表API的tag参数实现
    */
   async getBlogsByTag(
-    tagId: string,
+    tagName: string,
     params?: PaginationParams
   ): Promise<PaginationResult<BlogPost>> {
-    const queryParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined) {
-          queryParams.append(key, value.toString());
-        }
-      });
-    }
-
-    const url = queryParams.toString()
-      ? `${API_ENDPOINTS.BLOG.TAGS}/${tagId}/blogs?${queryParams.toString()}`
-      : `${API_ENDPOINTS.BLOG.TAGS}/${tagId}/blogs`;
-
-    return httpClient.get<PaginationResult<BlogPost>>(url, { skipAuth: true });
+    // 使用博客列表API的tag查询参数
+    const blogParams = {
+      ...params,
+      tag: tagName
+    };
+    
+    return this.getBlogs(blogParams);
   }
 
   /**
-   * 获取热门标签
+   * 获取热门标签 - 从博客数据中统计
    */
   async getPopularTags(limit = 20): Promise<BlogTag[]> {
-    return httpClient.get<BlogTag[]>(
-      `${API_ENDPOINTS.BLOG.TAGS}/popular?limit=${limit}`,
-      { skipAuth: true }
-    );
+    try {
+      const allTags = await this.getTags();
+      
+      // 获取所有博客来统计标签使用频率
+      const response = await this.getBlogs({ page: 1, limit: 1000 });
+      const blogs = Array.isArray(response?.data) ? response.data : [];
+      
+      // 统计每个标签的使用次数
+      const tagCounts = new Map<string, number>();
+      
+      blogs.forEach(blog => {
+        if (blog.tags && Array.isArray(blog.tags)) {
+          blog.tags.forEach(tag => {
+            const tagName = typeof tag === 'string' ? tag : tag.name;
+            tagCounts.set(tagName, (tagCounts.get(tagName) || 0) + 1);
+          });
+        }
+      });
+      
+      // 按使用频率排序并返回前N个
+      return allTags
+        .map(tag => ({
+          ...tag,
+          count: tagCounts.get(tag.name) || 0
+        }))
+        .sort((a, b) => (b.count || 0) - (a.count || 0))
+        .slice(0, limit);
+    } catch (error) {
+      console.error('获取热门标签失败:', error);
+      return [];
+    }
   }
 
   // ==================== 博客评论管理 ====================

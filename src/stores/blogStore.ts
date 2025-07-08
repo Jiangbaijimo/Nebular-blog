@@ -75,7 +75,7 @@ interface BlogState {
   // 筛选和排序
   filters: {
     categoryId?: string;
-    tagId?: string;
+    tag?: string;
     status?: 'published' | 'draft' | 'archived';
     sortBy?: 'createdAt' | 'updatedAt' | 'views' | 'likes';
     sortOrder?: 'asc' | 'desc';
@@ -118,7 +118,7 @@ interface BlogActions {
   createTag: (tag: Omit<Tag, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   updateTag: (id: string, tag: Partial<Tag>) => Promise<void>;
   deleteTag: (id: string) => Promise<void>;
-  getBlogsByTag: (tagId: string, params?: BlogListParams) => Promise<void>;
+  getBlogsByTag: (tagName: string, params?: BlogListParams) => Promise<void>;
   getPopularTags: (limit?: number) => Promise<void>;
   
   // ==================== 评论管理 ====================
@@ -234,12 +234,12 @@ export const useBlogStore = create<BlogStore>()
           const response = await blogAPI.getBlogs(mergedParams);
           
           set((state) => {
-            state.blogs = response.data;
+            state.blogs = Array.isArray(response?.data) ? response.data : [];
             state.pagination = {
-              page: response.page,
-              pageSize: response.pageSize,
-              total: response.total,
-              totalPages: response.totalPages,
+              page: response?.page || 1,
+              pageSize: response?.pageSize || 10,
+              total: response?.total || 0,
+              totalPages: response?.totalPages || 0,
             };
             state.isLoading = false;
           });
@@ -543,12 +543,12 @@ export const useBlogStore = create<BlogStore>()
           const response = await blogAPI.searchBlogs(query, mergedParams);
           
           set((state) => {
-            state.searchResults = response.data;
+            state.searchResults = Array.isArray(response?.data) ? response.data : [];
             state.pagination = {
-              page: response.page,
-              pageSize: response.pageSize,
-              total: response.total,
-              totalPages: response.totalPages,
+              page: response?.page || 1,
+              pageSize: response?.pageSize || 10,
+              total: response?.total || 0,
+              totalPages: response?.totalPages || 0,
             };
             state.isLoading = false;
           });
@@ -662,12 +662,12 @@ export const useBlogStore = create<BlogStore>()
           const response = await blogAPI.getBlogsByCategory(categoryId, mergedParams);
           
           set((state) => {
-            state.blogs = response.data;
+            state.blogs = Array.isArray(response?.data) ? response.data : [];
             state.pagination = {
-              page: response.page,
-              pageSize: response.pageSize,
-              total: response.total,
-              totalPages: response.totalPages,
+              page: response?.page || 1,
+              pageSize: response?.pageSize || 10,
+              total: response?.total || 0,
+              totalPages: response?.totalPages || 0,
             };
             state.filters.categoryId = categoryId;
             state.isLoading = false;
@@ -746,7 +746,7 @@ export const useBlogStore = create<BlogStore>()
         }
       },
 
-      getBlogsByTag: async (tagId: string, params?: BlogListParams) => {
+      getBlogsByTag: async (tagName: string, params?: BlogListParams) => {
         set((state) => {
           state.isLoading = true;
           state.error = null;
@@ -756,20 +756,21 @@ export const useBlogStore = create<BlogStore>()
           const mergedParams = {
             page: 1,
             pageSize: get().pagination.pageSize,
+            tag: tagName,
             ...params,
           };
 
-          const response = await blogAPI.getBlogsByTag(tagId, mergedParams);
+          const response = await blogAPI.getBlogs(mergedParams);
           
           set((state) => {
-            state.blogs = response.data;
+            state.blogs = Array.isArray(response?.data) ? response.data : [];
             state.pagination = {
-              page: response.page,
-              pageSize: response.pageSize,
-              total: response.total,
-              totalPages: response.totalPages,
+              page: response?.page || 1,
+              pageSize: response?.pageSize || 10,
+              total: response?.total || 0,
+              totalPages: response?.totalPages || 0,
             };
-            state.filters.tagId = tagId;
+            state.filters.tag = tagName;
             state.isLoading = false;
           });
         } catch (error) {
@@ -808,12 +809,12 @@ export const useBlogStore = create<BlogStore>()
           const response = await blogAPI.getComments(blogId, { page, pageSize });
           
           set((state) => {
-            state.comments = response.data;
+            state.comments = Array.isArray(response?.data) ? response.data : [];
             state.commentsPagination = {
-              page: response.page,
-              pageSize: response.pageSize,
-              total: response.total,
-              totalPages: response.totalPages,
+              page: response?.page || 1,
+              pageSize: response?.pageSize || 20,
+              total: response?.total || 0,
+              totalPages: response?.totalPages || 0,
             };
             state.isLoadingComments = false;
           });
@@ -930,7 +931,7 @@ export const useBlogStore = create<BlogStore>()
           const response = await blogAPI.getDrafts(mergedParams);
           
           set((state) => {
-            state.drafts = response.data;
+            state.drafts = Array.isArray(response?.data) ? response.data : [];
             state.isLoadingDrafts = false;
           });
         } catch (error) {

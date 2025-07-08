@@ -94,11 +94,13 @@ const OfflineDataSync: React.FC<OfflineDataSyncProps> = ({
     offlineModeManager.on('operation_added', refreshData);
     offlineModeManager.on('operation_failed', refreshData);
 
-    // 自动刷新
+    // 暂时禁用自动刷新，避免频繁API调用
+    /*
     let refreshInterval: NodeJS.Timeout | null = null;
     if (autoRefresh) {
       refreshInterval = setInterval(refreshData, 5000); // 每5秒刷新
     }
+    */
 
     return () => {
       offlineModeManager.off('sync_started', handleSyncStart);
@@ -107,9 +109,11 @@ const OfflineDataSync: React.FC<OfflineDataSyncProps> = ({
       offlineModeManager.off('operation_added', refreshData);
       offlineModeManager.off('operation_failed', refreshData);
       
+      /*
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }
+      */
     };
   }, [autoRefresh]);
 

@@ -120,7 +120,7 @@ export interface PostFilter {
 
 export interface PostSort {
   field: 'createdAt' | 'updatedAt' | 'publishedAt' | 'title' | 'viewCount' | 'likeCount';
-  order: 'asc' | 'desc';
+  order: 'ASC' | 'DESC';
 }
 
 export interface PaginatedPosts {
@@ -284,9 +284,9 @@ export interface BlogListParams {
   limit?: number;
   status?: BlogStatus | '';
   sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
+  sortOrder?: 'ASC' | 'DESC';
   categoryId?: string;
-  tagId?: string;
+  tag?: string;
   search?: string;
   authorId?: string;
 }

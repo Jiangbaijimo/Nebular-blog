@@ -260,7 +260,7 @@ export function useMediaStats() {
     () => uploadAPI.getMediaStats(),
     {
       immediate: true,
-      refreshInterval: 60000, // 每分钟刷新一次
+      // refreshInterval: 60000, // 暂时禁用自动刷新，避免频繁API调用
       onError: (error) => {
         console.error('获取媒体统计失败:', error);
       }

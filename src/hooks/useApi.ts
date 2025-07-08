@@ -83,6 +83,14 @@ export function useApi<T, P = any>(
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  
+  // 更新回调refs
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  }, [onSuccess, onError]);
 
   // 执行API请求
   const execute = useCallback(async (params?: P, options?: { silent?: boolean }) => {
@@ -108,7 +116,7 @@ export function useApi<T, P = any>(
       });
 
       retryCountRef.current = 0;
-      onSuccess?.(result);
+      onSuccessRef.current?.(result);
       
       return result;
     } catch (error: any) {
@@ -129,10 +137,10 @@ export function useApi<T, P = any>(
         error: errorMessage
       }));
 
-      onError?.(errorMessage);
+      onErrorRef.current?.(errorMessage);
       throw error;
     }
-  }, [apiFunction, retryCount, retryDelay, onSuccess, onError]);
+  }, [apiFunction, retryCount, retryDelay]); // 移除onSuccess和onError依赖，使用ref存储
 
   // 刷新数据
   const refresh = useCallback((params?: P) => {
@@ -214,35 +222,49 @@ export function usePaginatedApi<T, P extends PaginationParams = PaginationParams
   initialParams: P,
   options: ApiOptions & { debounceDelay?: number } = {}
 ) {
-  const { debounceDelay = 300, ...apiOptions } = options;
+  const { debounceDelay = 500, ...apiOptions } = options; // 增加防抖延迟到500ms
   const [params, setParams] = useState<P>(initialParams);
   const [isUpdating, setIsUpdating] = useState(false);
+  const paramsRef = useRef<P>(initialParams);
+  
+  // 更新ref
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
   
   const api = useApi(
-    useCallback((p: P) => apiFunction(p || params), [apiFunction, params]),
+    useCallback((p: P) => apiFunction(p || paramsRef.current), [apiFunction]),
     { ...apiOptions, immediate: false }
   );
 
+  // 使用ref存储api.execute避免依赖循环
+  const executeRef = useRef(api.execute);
+  useEffect(() => {
+    executeRef.current = api.execute;
+  }, [api.execute]);
+
   // 防抖的API执行函数
-  const debouncedExecute = useDebounce((newParams: P) => {
+  const debouncedExecute = useDebounce(useCallback((newParams: P) => {
     setIsUpdating(false);
-    api.execute(newParams);
-  }, debounceDelay);
+    executeRef.current(newParams);
+  }, []), debounceDelay);
 
   // 更新参数并重新获取数据
   const updateParams = useCallback((newParams: Partial<P>) => {
-    const updatedParams = { ...params, ...newParams } as P;
+    const updatedParams = { ...paramsRef.current, ...newParams } as P;
     setParams(updatedParams);
     setIsUpdating(true);
     debouncedExecute(updatedParams);
-  }, [params, debouncedExecute]);
+  }, [debouncedExecute]);
 
   // 初始加载
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (apiOptions.immediate !== false) {
-      api.execute(params);
+    if (apiOptions.immediate !== false && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      executeRef.current(initialParams);
     }
-  }, []);
+  }, [apiOptions.immediate]); // 只在immediate变化时重新执行
 
   // 跳转到指定页
   const goToPage = useCallback((page: number) => {

@@ -18,7 +18,8 @@ class AutoRefreshService {
   private isEnabled = true;
 
   private constructor() {
-    this.startAutoRefresh();
+    // 暂时禁用自动刷新，避免频繁API调用
+    // this.startAutoRefresh();
     this.setupVisibilityListener();
   }
 

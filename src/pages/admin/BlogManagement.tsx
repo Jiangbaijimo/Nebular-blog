@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search,
   Filter,
@@ -58,7 +58,7 @@ const BlogManagement: React.FC = () => {
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
 
   // 使用博客相关的hooks
   const {
@@ -73,56 +73,79 @@ const BlogManagement: React.FC = () => {
     limit: 10
   } as BlogListParams);
 
-  // 使用useEffect来同步过滤参数，避免在初始化时传入动态值
-  useEffect(() => {
-    updateParams({
-      search: searchTerm || undefined,
-      status: statusFilter || undefined,
-      categoryId: categoryFilter || undefined,
-      tagId: tagFilter || undefined,
-      sortBy,
-      sortOrder,
-      page: 1
-    } as Partial<BlogListParams>);
-  }, [searchTerm, statusFilter, categoryFilter, tagFilter, sortBy, sortOrder, updateParams]);
+  // 移除这个useEffect，因为初始参数已经在useBlogList中设置了
+  // 避免重复的API调用
 
-  const { data: stats, loading: statsLoading } = useBlogStats();
-  const { data: categories } = useBlogCategories();
-  const { data: tags } = useBlogTags();
+  // 延迟加载统计数据，避免初始页面加载时过多API调用
+  const { data: stats, loading: statsLoading, execute: loadStats } = useBlogStats();
+  const { data: categories, execute: loadCategories } = useBlogCategories();
+  const { data: tags, execute: loadTags } = useBlogTags();
+  
+  // 在组件挂载后延迟加载辅助数据
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadStats();
+      loadCategories();
+      loadTags();
+    }, 500); // 延迟500ms加载
+    
+    return () => clearTimeout(timer);
+  }, [loadStats, loadCategories, loadTags]);
   const { submit: deleteBlog, loading: deleteLoading } = useDeleteBlog();
   const { submit: batchDelete, loading: batchDeleteLoading } = useBatchDeleteBlogs();
   const { submit: publishBlog, loading: publishLoading } = usePublishBlog();
 
-  const blogs = blogData?.data || [];
+  const blogs = Array.isArray(blogData?.data) ? blogData.data : [];
   const totalCount = blogData?.total || 0;
   const loading = blogsLoading;
 
   // 搜索处理
-  const handleSearch = (term: string) => {
+  const handleSearch = useCallback((term: string) => {
     setSearchTerm(term);
-  };
+    updateParams({
+      search: term || undefined,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [updateParams]);
 
   // 状态过滤处理
-  const handleStatusFilter = (status: BlogStatus | '') => {
+  const handleStatusFilter = useCallback((status: BlogStatus | '') => {
     setStatusFilter(status);
-  };
+    updateParams({
+      status: status || undefined,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [updateParams]);
 
   // 分类过滤处理
-  const handleCategoryFilter = (categoryId: string) => {
+  const handleCategoryFilter = useCallback((categoryId: string) => {
     setCategoryFilter(categoryId);
-  };
+    updateParams({
+      categoryId: categoryId || undefined,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [updateParams]);
 
   // 标签过滤处理
-  const handleTagFilter = (tagId: string) => {
-    setTagFilter(tagId);
-  };
+  const handleTagFilter = useCallback((tagName: string) => {
+    setTagFilter(tagName);
+    updateParams({
+      tag: tagName || undefined,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [updateParams]);
 
   // 排序处理
-  const handleSort = (field: string) => {
-    const newOrder = sortBy === field && sortOrder === 'desc' ? 'asc' : 'desc';
+  const handleSort = useCallback((field: string) => {
+    const newOrder = sortBy === field && sortOrder === 'DESC' ? 'ASC' : 'DESC';
     setSortBy(field);
     setSortOrder(newOrder);
-  };
+    updateParams({
+      sortBy: field,
+      sortOrder: newOrder,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [updateParams, sortBy, sortOrder]);
 
   // 批量删除
   const handleBatchDelete = async () => {
@@ -132,7 +155,8 @@ const BlogManagement: React.FC = () => {
       try {
         await batchDelete(selectedPosts);
         setSelectedPosts([]);
-        refreshBlogs();
+        // 使用updateParams触发防抖刷新，而不是直接refreshBlogs
+        updateParams({});
       } catch (error) {
         console.error('批量删除失败:', error);
       }
@@ -149,7 +173,8 @@ const BlogManagement: React.FC = () => {
         await publishBlog({ id: postId, published: false });
       }
       setSelectedPosts([]);
-      refreshBlogs();
+      // 使用updateParams触发防抖刷新
+      updateParams({});
     } catch (error) {
       console.error('批量归档失败:', error);
     }
@@ -160,7 +185,8 @@ const BlogManagement: React.FC = () => {
     if (window.confirm('确定要删除这篇文章吗？')) {
       try {
         await deleteBlog(postId);
-        refreshBlogs();
+        // 使用updateParams触发防抖刷新
+        updateParams({});
       } catch (error) {
         console.error('删除文章失败:', error);
       }
@@ -171,7 +197,8 @@ const BlogManagement: React.FC = () => {
   const handleTogglePublish = async (blog: Blog) => {
     try {
       await publishBlog({ id: blog.id, published: !blog.published });
-      refreshBlogs();
+      // 使用updateParams触发防抖刷新
+      updateParams({});
     } catch (error) {
       console.error('更新发布状态失败:', error);
     }
@@ -256,7 +283,7 @@ const BlogManagement: React.FC = () => {
           </div>
           <div className="mt-4">
             <button
-              onClick={refreshBlogs}
+              onClick={() => updateParams({})}
               className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
             >
               重试
@@ -451,7 +478,7 @@ const BlogManagement: React.FC = () => {
             </select>
             
             <button
-              onClick={refreshBlogs}
+              onClick={() => updateParams({})}
               disabled={loading}
               className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
             >

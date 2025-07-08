@@ -24,15 +24,35 @@ import type {
 export function useBlogList(initialParams: BlogListParams = { page: 1, limit: 10 }) {
   return usePaginatedApi(
     async (params: BlogListParams) => {
-      const response = await blogAPI.getBlogs(params);
-      // 转换BlogListResponse为PaginationResult格式
-      return {
-        data: response.data,
-        total: response.total,
-        page: response.page,
-        limit: response.limit,
-        totalPages: response.totalPages
-      };
+      try {
+        const response = await blogAPI.getBlogs(params);
+        // 确保返回的数据结构正确
+        if (!response || typeof response !== 'object') {
+          throw new Error('API返回数据格式错误');
+        }
+        
+        // 确保data字段是数组
+        const data = Array.isArray(response.data) ? response.data : [];
+        
+        // 转换BlogListResponse为PaginationResult格式
+        return {
+          data,
+          total: response.total || 0,
+          page: response.page || 1,
+          limit: response.limit || 10,
+          totalPages: response.totalPages || 0
+        };
+      } catch (error) {
+        console.error('获取博客列表失败:', error);
+        // 返回空数据结构而不是抛出错误
+        return {
+          data: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0
+        };
+      }
     },
     initialParams,
     {
@@ -161,10 +181,12 @@ export function usePublishBlog() {
  * @returns 分类列表状态和操作方法
  */
 export function useBlogCategories() {
+  const apiFunction = useCallback(() => blogAPI.getCategories(), []);
+  
   return useApi(
-    () => blogAPI.getCategories(),
+    apiFunction,
     {
-      immediate: true,
+      immediate: false, // 改为手动加载
       onError: (error) => {
         console.error('获取博客分类失败:', error);
       }
@@ -233,10 +255,12 @@ export function useDeleteBlogCategory() {
  * @returns 标签列表状态和操作方法
  */
 export function useBlogTags() {
+  const apiFunction = useCallback(() => blogAPI.getTags(), []);
+  
   return useApi(
-    () => blogAPI.getTags(),
+    apiFunction,
     {
-      immediate: true,
+      immediate: false, // 改为手动加载
       onError: (error) => {
         console.error('获取博客标签失败:', error);
       }
@@ -349,11 +373,14 @@ export function useDeleteBlogComment() {
  * @returns 博客统计数据
  */
 export function useBlogStats() {
+  const apiFunction = useCallback(() => blogAPI.getBlogStats(), []);
+  
   return useApi(
-    () => blogAPI.getBlogStats(),
+    apiFunction,
     {
-      immediate: true,
-      refreshInterval: 60000, // 每分钟刷新一次
+      immediate: false, // 改为手动加载
+      // 移除自动刷新，避免频繁API调用
+      // refreshInterval: 60000, // 每分钟刷新一次
       onError: (error) => {
         console.error('获取博客统计失败:', error);
       }

@@ -248,7 +248,7 @@ export function useUserStats() {
     () => userAPI.getUserStats(),
     {
       immediate: true,
-      refreshInterval: 60000, // 每分钟刷新一次
+      // refreshInterval: 60000, // 暂时禁用自动刷新，避免频繁API调用
       onError: (error) => {
         console.error('获取用户统计失败:', error);
       }

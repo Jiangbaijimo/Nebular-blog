@@ -76,7 +76,7 @@ export function useSystemStats() {
     () => systemAPI.getSystemStats(),
     {
       immediate: true,
-      refreshInterval: 30000, // 每30秒刷新一次
+      // refreshInterval: 30000, // 暂时禁用自动刷新，避免频繁API调用
       onError: (error) => {
         console.error('获取系统统计失败:', error);
       }
@@ -93,7 +93,7 @@ export function useSystemHealth() {
     () => systemAPI.getSystemHealth(),
     {
       immediate: true,
-      refreshInterval: 10000, // 每10秒刷新一次
+      // refreshInterval: 10000, // 暂时禁用自动刷新，避免频繁API调用
       onError: (error) => {
         console.error('获取系统健康状态失败:', error);
       }
@@ -303,7 +303,7 @@ export function useSystemNotifications() {
     () => systemAPI.getSystemNotifications(),
     {
       immediate: true,
-      refreshInterval: 60000, // 每分钟刷新一次
+      // refreshInterval: 60000, // 暂时禁用自动刷新，避免频繁API调用
       onError: (error) => {
         console.error('获取系统通知失败:', error);
       }

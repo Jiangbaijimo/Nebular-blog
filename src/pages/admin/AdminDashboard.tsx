@@ -7,7 +7,8 @@ import {
   Calendar,
   Activity,
   BarChart3,
-  PieChart
+  PieChart,
+  RefreshCw
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -34,53 +35,64 @@ const AdminDashboard: React.FC = () => {
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // 模拟数据加载
+  const loadDashboardData = async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setStats({
+      totalUsers: 1234,
+      totalPosts: 89,
+      totalViews: 45678,
+      monthlyGrowth: 12.5
+    });
+
+    setRecentActivity([
+      {
+        id: '1',
+        type: 'post',
+        title: '新文章《Tauri开发指南》已发布',
+        time: '2小时前',
+        user: '张三'
+      },
+      {
+        id: '2',
+        type: 'user',
+        title: '新用户注册',
+        time: '3小时前',
+        user: '李四'
+      },
+      {
+        id: '3',
+        type: 'comment',
+        title: '收到新评论',
+        time: '5小时前',
+        user: '王五'
+      },
+      {
+        id: '4',
+        type: 'post',
+        title: '文章《React最佳实践》已更新',
+        time: '1天前',
+        user: '赵六'
+      }
+    ]);
+
+    setLoading(false);
+  };
+
+  // 手动刷新数据
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadDashboardData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    // 模拟数据加载
-    const loadDashboardData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setStats({
-        totalUsers: 1234,
-        totalPosts: 89,
-        totalViews: 45678,
-        monthlyGrowth: 12.5
-      });
-
-      setRecentActivity([
-        {
-          id: '1',
-          type: 'post',
-          title: '新文章《Tauri开发指南》已发布',
-          time: '2小时前',
-          user: '张三'
-        },
-        {
-          id: '2',
-          type: 'user',
-          title: '新用户注册',
-          time: '3小时前',
-          user: '李四'
-        },
-        {
-          id: '3',
-          type: 'comment',
-          title: '收到新评论',
-          time: '5小时前',
-          user: '王五'
-        },
-        {
-          id: '4',
-          type: 'post',
-          title: '文章《React最佳实践》已更新',
-          time: '1天前',
-          user: '赵六'
-        }
-      ]);
-
-      setLoading(false);
-    };
-
     loadDashboardData();
   }, []);
 
@@ -161,9 +173,19 @@ const AdminDashboard: React.FC = () => {
             欢迎回来！这里是您的博客系统概览。
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <Calendar className="w-4 h-4" />
-          <span>{new Date().toLocaleDateString('zh-CN')}</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? '刷新中...' : '刷新数据'}</span>
+          </button>
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <Calendar className="w-4 h-4" />
+            <span>{new Date().toLocaleDateString('zh-CN')}</span>
+          </div>
         </div>
       </div>
 

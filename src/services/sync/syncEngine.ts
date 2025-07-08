@@ -47,10 +47,12 @@ class SyncEngine {
     // 立即执行一次同步
     await this.performSync();
     
-    // 设置定时同步
+    // 暂时禁用定时同步，避免频繁API调用
+    /*
     this.syncInterval = setInterval(() => {
       this.performSync();
     }, this.syncIntervalMs);
+    */
 
     // 监听网络状态变化
     this.setupNetworkListener();

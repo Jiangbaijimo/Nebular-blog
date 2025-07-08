@@ -77,41 +77,40 @@ export const API_ENDPOINTS = {
   // 博客相关 (别名，与 blogAPI 服务保持一致)
   BLOG: {
     LIST: `${API_BASE_URL}/blogs`,
-    CREATE: `${API_BASE_URL}/posts`,
-    DETAIL: `${API_BASE_URL}/posts`,
-    UPDATE: `${API_BASE_URL}/posts`,
-    DELETE: `${API_BASE_URL}/posts`,
-    PUBLISH: `${API_BASE_URL}/posts`,
-    UNPUBLISH: `${API_BASE_URL}/posts`,
-    LIKE: `${API_BASE_URL}/posts`,
-    FAVORITE: `${API_BASE_URL}/posts`,
-    VIEW: `${API_BASE_URL}/posts`,
-    SEARCH: `${API_BASE_URL}/posts/search`,
-    SEARCH_SUGGESTIONS: `${API_BASE_URL}/posts/search/suggestions`,
-    BY_SLUG: `${API_BASE_URL}/posts/slug`,
-    BULK_DELETE: `${API_BASE_URL}/posts/batch-delete`,
+    CREATE: `${API_BASE_URL}/blogs`,
+    DETAIL: `${API_BASE_URL}/blogs`,
+    UPDATE: `${API_BASE_URL}/blogs`,
+    DELETE: `${API_BASE_URL}/blogs`,
+    PUBLISH: `${API_BASE_URL}/blogs`,
+    UNPUBLISH: `${API_BASE_URL}/blogs`,
+    LIKE: `${API_BASE_URL}/blogs`,
+    FAVORITE: `${API_BASE_URL}/blogs`,
+    VIEW: `${API_BASE_URL}/blogs`,
+    SEARCH: `${API_BASE_URL}/blogs/search`,
+    SEARCH_SUGGESTIONS: `${API_BASE_URL}/blogs/search/suggestions`,
+    BY_SLUG: `${API_BASE_URL}/blogs/slug`,
+    BULK_DELETE: `${API_BASE_URL}/blogs/batch-delete`,
     CATEGORIES: `${API_BASE_URL}/categories`,
-    TAGS: `${API_BASE_URL}/tags`,
     
     // 博客统计
-    STATS: `${API_BASE_URL}/posts/stats`,
-    POPULAR: `${API_BASE_URL}/posts/popular`,
-    RECOMMENDED: `${API_BASE_URL}/posts/recommended`,
-    LATEST: `${API_BASE_URL}/posts/latest`,
+    STATS: `${API_BASE_URL}/blogs/stats`,
+    POPULAR: `${API_BASE_URL}/blogs/popular`,
+    RECOMMENDED: `${API_BASE_URL}/blogs/recommended`,
+    LATEST: `${API_BASE_URL}/blogs/latest`,
     
     // 博客评论
     COMMENTS: `${API_BASE_URL}/comments`,
     
     // 博客草稿
-    DRAFTS: `${API_BASE_URL}/posts/drafts`,
+    DRAFTS: `${API_BASE_URL}/blogs/drafts`,
     
     // 博客版本
-    VERSIONS: `${API_BASE_URL}/posts/versions`,
+    VERSIONS: `${API_BASE_URL}/blogs/versions`,
     
     // 博客导入导出
-    EXPORT: `${API_BASE_URL}/posts/export`,
-    EXPORT_BULK: `${API_BASE_URL}/posts/export/bulk`,
-    IMPORT: `${API_BASE_URL}/posts/import`,
+    EXPORT: `${API_BASE_URL}/blogs/export`,
+    EXPORT_BULK: `${API_BASE_URL}/blogs/export/bulk`,
+    IMPORT: `${API_BASE_URL}/blogs/import`,
   },
 
   // 分类相关

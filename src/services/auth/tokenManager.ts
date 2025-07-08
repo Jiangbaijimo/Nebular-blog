@@ -231,11 +231,14 @@ class TokenManager {
    * 设置自动刷新
    */
   private setupAutoRefresh(): void {
+    // 暂时禁用自动刷新，避免频繁API调用
     // 清除现有的定时器
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
     }
     
+    // 注释掉自动刷新逻辑
+    /*
     if (!this.tokenExpiry) {
       return;
     }
@@ -259,6 +262,7 @@ class TokenManager {
         console.error('Immediate refresh failed:', error);
       });
     }
+    */
   }
 
   /**
@@ -541,13 +545,18 @@ class TokenManager {
     // 立即执行一次
     checkToken();
     
-    // 设置定期检查
+    // 暂时禁用定期检查，避免频繁API调用
+    /*
     const interval = setInterval(checkToken, 60000); // 每分钟检查一次
     
     // 返回清理函数
     return () => {
       clearInterval(interval);
     };
+    */
+    
+    // 返回空的清理函数
+    return () => {};
   }
 }
 
