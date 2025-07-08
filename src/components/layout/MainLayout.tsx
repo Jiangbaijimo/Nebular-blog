@@ -39,7 +39,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   children,
   showHeader = true,
   showSidebar = false,
-  showFooter = false,
+  showFooter = true,
   headerProps = {},
   sidebarProps = {},
   footerProps = {},
@@ -149,9 +149,12 @@ export const LayoutPresets = {
   auth: {
     showHeader: false,
     showSidebar: false,
-    showFooter: false,
+    showFooter: true,
     containerClassName: 'min-h-screen bg-gray-50 dark:bg-gray-900',
-    mainClassName: 'flex flex-col justify-center py-12 sm:px-6 lg:px-8'
+    mainClassName: 'flex flex-col justify-center py-12 sm:px-6 lg:px-8',
+    footerProps: {
+      variant: 'minimal' as const
+    }
   } as LayoutConfig,
 
   // 管理后台布局
@@ -185,11 +188,14 @@ export const LayoutPresets = {
   editor: {
     showHeader: true,
     showSidebar: false,
-    showFooter: false,
+    showFooter: true,
     containerClassName: 'h-screen bg-white dark:bg-gray-900 flex flex-col',
     mainClassName: 'flex-1 overflow-hidden',
     headerProps: {
       showMenuButton: false
+    },
+    footerProps: {
+      variant: 'minimal' as const
     }
   } as LayoutConfig,
 
