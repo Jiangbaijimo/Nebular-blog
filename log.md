@@ -1,15 +1,15 @@
-curl 'http://localhost:3001/api/blogs?page=1&limit=10' \
+curl 'http://localhost:3001/api/blogs?page=1&limit=1000' \
   -H 'Accept: application/json, text/plain, */*' \
   -H 'Accept-Language: zh-CN,zh;q=0.9' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE5NzUzMjAsImV4cCI6MTc1MjU4MDEyMH0.Mc4vs8WJdPZc5iqZ1JQ4Vzxj2Q90oipIFsN-65wkDmk' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE5Nzc5ODAsImV4cCI6MTc1MjU4Mjc4MH0.rj2wWK96OR1qyFc0FbaxKTGo-mx-H75aP-f3rURIxzo' \
   -H 'Connection: keep-alive' \
-  -H 'If-None-Match: W/"1ca2-qGoOTGArKw4kXFJe6LCvZJY8zco"' \
+  -H 'If-None-Match: W/"1ca4-+clgN6LxXiW1aFiH+b/1Isup4zM"' \
   -H 'Referer: http://localhost:3001/admin/blogs' \
   -H 'Sec-Fetch-Dest: empty' \
   -H 'Sec-Fetch-Mode: cors' \
   -H 'Sec-Fetch-Site: same-origin' \
   -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0' \
-  -H 'X-Request-ID: 1751975330916-3oj9k77ub' \
+  -H 'X-Request-ID: 1751977981429-ltswyjowz' \
   -H 'sec-ch-ua: "Microsoft Edge";v="137", "Chromium";v="137", "Not/A)Brand";v="24"' \
   -H 'sec-ch-ua-mobile: ?0' \
   -H 'sec-ch-ua-platform: "Windows"'
@@ -285,12 +285,12 @@ curl 'http://localhost:3001/api/blogs?page=1&limit=10' \
             ],
             "total": 4,
             "page": 1,
-            "limit": 10,
+            "limit": 1000,
             "totalPages": 1
         },
         "message": "操作成功",
-        "timestamp": "2025-07-08T11:48:50.934Z"
+        "timestamp": "2025-07-08T12:33:01.771Z"
     },
     "message": "操作成功",
-    "timestamp": "2025-07-08T11:48:50.934Z"
+    "timestamp": "2025-07-08T12:33:01.771Z"
 }

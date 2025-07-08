@@ -230,7 +230,7 @@ const AdminLayout: React.FC = () => {
         {/* 主内容区域 */}
         <main className={cn(
           "flex-1 min-h-screen transition-all duration-300",
-          "lg:ml-64"
+          isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
         )} style={{ paddingTop: '64px' }}>
           <div className="p-6">
             <Outlet />

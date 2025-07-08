@@ -96,12 +96,43 @@ const BlogManagement: React.FC = () => {
   const { submit: publishBlog, loading: publishLoading } = usePublishBlog();
 
   // 修复数据获取逻辑，确保正确处理API响应数据
-  const blogs = Array.isArray(blogData?.data) ? blogData.data : [];
+  let blogs = Array.isArray(blogData?.data) ? blogData.data : [];
   const totalCount = blogData?.total || 0;
   
-  console.log('BlogManagement - blogData:', blogData);
-  console.log('BlogManagement - blogs:', blogs);
   const loading = blogsLoading;
+  
+  console.log('BlogManagement - 完整响应数据:', blogData);
+  console.log('BlogManagement - 提取的blogs数组:', blogs);
+  console.log('BlogManagement - 总数:', totalCount);
+  console.log('BlogManagement - 分页信息:', pagination);
+  console.log('BlogManagement - 加载状态:', loading);
+  console.log('BlogManagement - 错误信息:', blogsError);
+  
+  // 临时测试数据 - 当API数据为空时使用
+  if (blogs.length === 0 && !loading && !blogsError) {
+    console.log('使用测试数据');
+    blogs = [
+      {
+        id: 'test-1',
+        title: '测试文章标题',
+        summary: '这是一篇测试文章的摘要内容...',
+        content: '这是测试文章的完整内容',
+        status: 'published' as const,
+        author: {
+          id: 'author-1',
+          nickname: '测试作者',
+          username: 'testuser'
+        },
+        tags: ['测试', '博客'],
+        categories: [{ id: 'cat-1', name: '技术' }],
+        viewCount: 123,
+        publishedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        slug: 'test-article'
+      }
+    ];
+  }
 
   // 搜索处理
   const handleSearch = useCallback((term: string) => {
