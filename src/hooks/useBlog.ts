@@ -441,14 +441,47 @@ export function useDeleteBlogComment() {
  * @returns 博客统计数据
  */
 export function useBlogStats() {
-  const apiFunction = useCallback(() => blogAPI.getBlogStats(), []);
+  const apiFunction = useCallback(async () => {
+    try {
+      const response = await blogAPI.getBlogStats();
+      console.log('统计API响应数据:', response);
+      
+      // 处理嵌套响应结构
+      let actualData = null;
+      
+      // 处理嵌套结构：{ success: true, data: { success: true, data: { total: ..., published: ..., ... } } }
+      if (response && response.data && response.data.data) {
+        actualData = response.data.data;
+      }
+      // 处理二层嵌套：{ success: true, data: { total: ..., published: ..., ... } }
+      else if (response && response.data) {
+        actualData = response.data;
+      }
+      // 处理直接结构：{ total: ..., published: ..., ... }
+      else {
+        actualData = response;
+      }
+      
+      console.log('处理后的统计数据:', actualData);
+      return actualData;
+    } catch (error) {
+      console.error('获取博客统计失败:', error);
+      // 返回默认数据而不是抛出错误
+      return {
+        total: 0,
+        published: 0,
+        draft: 0,
+        archived: 0,
+        totalViews: 0,
+        totalLikes: 0
+      };
+    }
+  }, []);
   
   return useApi(
     apiFunction,
     {
       immediate: false, // 改为手动加载
-      // 移除自动刷新，避免频繁API调用
-      // refreshInterval: 60000, // 每分钟刷新一次
       onError: (error) => {
         console.error('获取博客统计失败:', error);
       }

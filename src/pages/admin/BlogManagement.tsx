@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Search,
   Filter,
@@ -83,16 +83,21 @@ const BlogManagement: React.FC = () => {
   const { data: categories, execute: loadCategories } = useBlogCategories();
   const { data: tags, execute: loadTags } = useBlogTags();
   
-  // 在组件挂载后延迟加载辅助数据
+  // 在组件挂载后延迟加载辅助数据，使用ref避免重复调用
+  const hasLoadedRef = useRef(false);
+  
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+    
     const timer = setTimeout(() => {
       loadStats();
       loadCategories();
       loadTags();
+      hasLoadedRef.current = true;
     }, 500); // 延迟500ms加载
     
     return () => clearTimeout(timer);
-  }, [loadStats, loadCategories, loadTags]);
+  }, []); // 移除依赖项，只在组件挂载时执行一次
   
   const { submit: deleteBlog, loading: deleteLoading } = useDeleteBlog();
   const { submit: batchDelete, loading: batchDeleteLoading } = useBatchDeleteBlogs();
@@ -340,7 +345,7 @@ const BlogManagement: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">总文章数</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {statsLoading ? '...' : (stats?.totalBlogs || 0)}
+                {statsLoading ? '...' : (stats?.total || 0)}
               </p>
             </div>
           </div>
@@ -354,7 +359,7 @@ const BlogManagement: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">已发布</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {statsLoading ? '...' : (stats?.publishedBlogs || 0)}
+                {statsLoading ? '...' : (stats?.published || 0)}
               </p>
             </div>
           </div>
@@ -368,7 +373,7 @@ const BlogManagement: React.FC = () => {
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">草稿</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {statsLoading ? '...' : (stats?.draftBlogs || 0)}
+                {statsLoading ? '...' : (stats?.draft || 0)}
               </p>
             </div>
           </div>
