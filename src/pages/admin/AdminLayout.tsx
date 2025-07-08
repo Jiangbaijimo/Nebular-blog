@@ -30,12 +30,29 @@ const AdminLayout: React.FC = () => {
       setIsMobile(mobile);
       if (mobile) {
         setIsSidebarOpen(false);
+      } else {
+        // 桌面端确保侧边栏打开
+        setIsSidebarOpen(true);
       }
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    
+    // 添加页面可见性变化监听，处理刷新后的布局问题
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // 页面变为可见时重新检查布局
+        setTimeout(checkMobile, 100);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const toggleSidebar = () => {
@@ -183,15 +200,22 @@ const AdminLayout: React.FC = () => {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex min-h-screen" >
         {/* 侧边栏 */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out",
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full",
-            "lg:translate-x-0 lg:static lg:inset-0 lg:top-16"
+            // 基础样式
+            "w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 ease-in-out",
+            // 移动端样式
+            "fixed inset-y-0 left-0 z-50 transform",
+            isMobile && (isSidebarOpen ? "translate-x-0" : "-translate-x-full"),
+            // 桌面端样式
+            "lg:relative lg:translate-x-0 lg:z-auto"
           )}
-          style={{ top: '64px' }}
+          style={{ 
+            top: isMobile ? '64px' : '0',
+            height: isMobile ? 'calc(100vh - 64px)' : '100vh'
+          }}
         >
           <div className="flex flex-col h-full pt-4">
             {/* 导航菜单 */}
@@ -229,9 +253,9 @@ const AdminLayout: React.FC = () => {
 
         {/* 主内容区域 */}
         <main className={cn(
-          "flex-1 min-h-screen transition-all duration-300",
-          isSidebarOpen ? "lg:ml-64" : "lg:ml-0"
-        )} style={{ paddingTop: '64px' }}>
+          "flex-1 transition-all duration-300",
+          "min-h-full" // 使用min-h-full而不是min-h-screen
+        )}>
           <div className="p-6">
             <Outlet />
           </div>

@@ -1,15 +1,16 @@
-curl 'http://localhost:3001/api/blogs?page=1&limit=1000' \
+curl 'http://localhost:3001/api/blogs?page=1&limit=10&sortBy=createdAt&sortOrder=DESC' \
   -H 'Accept: application/json, text/plain, */*' \
   -H 'Accept-Language: zh-CN,zh;q=0.9' \
-  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE5Nzc5ODAsImV4cCI6MTc1MjU4Mjc4MH0.rj2wWK96OR1qyFc0FbaxKTGo-mx-H75aP-f3rURIxzo' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE5OTk1MDUsImV4cCI6MTc1MjYwNDMwNX0.W7jbTkzM54apn0wOt9vMFHx6xFG_Ni4gLpUS-xn-tpQ' \
   -H 'Connection: keep-alive' \
-  -H 'If-None-Match: W/"1ca4-+clgN6LxXiW1aFiH+b/1Isup4zM"' \
+  -b 'JSESSIONID=46EA3FF6F53D243E105C29B718548A02' \
+  -H 'If-None-Match: W/"1ca2-S5t5a0y9lL1hsmElYH42dggJquQ"' \
   -H 'Referer: http://localhost:3001/admin/blogs' \
   -H 'Sec-Fetch-Dest: empty' \
   -H 'Sec-Fetch-Mode: cors' \
   -H 'Sec-Fetch-Site: same-origin' \
   -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0' \
-  -H 'X-Request-ID: 1751977981429-ltswyjowz' \
+  -H 'X-Request-ID: 1751999505804-e1owj9z33' \
   -H 'sec-ch-ua: "Microsoft Edge";v="137", "Chromium";v="137", "Not/A)Brand";v="24"' \
   -H 'sec-ch-ua-mobile: ?0' \
   -H 'sec-ch-ua-platform: "Windows"'
@@ -19,6 +20,73 @@ curl 'http://localhost:3001/api/blogs?page=1&limit=1000' \
         "success": true,
         "data": {
             "data": [
+                {
+                    "id": 5,
+                    "title": "关于此站点",
+                    "slug": "about-site",
+                    "summary": "站点介绍和技术栈",
+                    "content": "# 关于此站点\n\n## 技术栈\n\n本站点采用现代化的技术栈构建：\n\n### 后端\n- **框架**: NestJS\n- **数据库**: MySQL\n- **缓存**: Redis\n- **认证**: JWT\n- **文档**: Swagger\n\n### 前端\n- **框架**: React/Vue (可选)\n- **样式**: Tailwind CSS\n- **构建工具**: Vite\n\n## 功能特性\n\n- 📝 博客文章管理\n- 🏷️ 分类标签系统\n- 💬 评论系统\n- 📁 文件上传\n- ☁️ 云函数支持\n- 🔐 权限管理\n- 📊 数据统计\n\n## 开源\n\n本项目基于开源协议，欢迎贡献代码！",
+                    "coverImage": null,
+                    "status": "published",
+                    "viewCount": 0,
+                    "likeCount": 0,
+                    "commentCount": 0,
+                    "isTop": false,
+                    "allowComment": true,
+                    "tags": [
+                        "技术",
+                        "站点介绍",
+                        "NestJS"
+                    ],
+                    "seoKeywords": [
+                        "站点介绍",
+                        "技术栈",
+                        "NestJS",
+                        "博客系统"
+                    ],
+                    "seoDescription": "介绍本站点的技术栈和功能特性",
+                    "publishedAt": "2025-07-08T17:48:33.000Z",
+                    "author": {
+                        "id": 1,
+                        "email": "1181584752@qq.com",
+                        "username": "xiaoshenming",
+                        "avatar": "https://avatars.githubusercontent.com/u/113427145?v=4",
+                        "nickname": "xiaoshenming",
+                        "bio": null,
+                        "status": "active",
+                        "provider": "github",
+                        "providerId": "113427145",
+                        "emailVerified": true,
+                        "emailVerificationToken": null,
+                        "passwordResetToken": null,
+                        "passwordResetExpires": null,
+                        "lastLoginAt": null,
+                        "lastLoginIp": null,
+                        "githubUsername": null,
+                        "googleEmail": null,
+                        "createdAt": "2025-07-08T07:13:11.369Z",
+                        "updatedAt": "2025-07-08T07:13:11.369Z"
+                    },
+                    "authorId": 1,
+                    "categories": [
+                        {
+                            "id": 3,
+                            "name": "此站点",
+                            "slug": "about-site",
+                            "description": "站点介绍",
+                            "icon": null,
+                            "color": null,
+                            "sort": 2,
+                            "isActive": true,
+                            "blogCount": 0,
+                            "parentId": 1,
+                            "createdAt": "2025-07-08T07:12:48.868Z",
+                            "updatedAt": "2025-07-08T07:12:48.868Z"
+                        }
+                    ],
+                    "createdAt": "2025-07-08T17:48:32.648Z",
+                    "updatedAt": "2025-07-08T17:48:32.000Z"
+                },
                 {
                     "id": 4,
                     "title": "欢迎来到我的博客",
@@ -151,73 +219,6 @@ curl 'http://localhost:3001/api/blogs?page=1&limit=1000' \
                     "updatedAt": "2025-07-08T07:13:41.000Z"
                 },
                 {
-                    "id": 2,
-                    "title": "关于此站点",
-                    "slug": "about-site",
-                    "summary": "站点介绍和技术栈",
-                    "content": "# 关于此站点\n\n## 技术栈\n\n本站点采用现代化的技术栈构建：\n\n### 后端\n- **框架**: NestJS\n- **数据库**: MySQL\n- **缓存**: Redis\n- **认证**: JWT\n- **文档**: Swagger\n\n### 前端\n- **框架**: React/Vue (可选)\n- **样式**: Tailwind CSS\n- **构建工具**: Vite\n\n## 功能特性\n\n- 📝 博客文章管理\n- 🏷️ 分类标签系统\n- 💬 评论系统\n- 📁 文件上传\n- ☁️ 云函数支持\n- 🔐 权限管理\n- 📊 数据统计\n\n## 开源\n\n本项目基于开源协议，欢迎贡献代码！",
-                    "coverImage": null,
-                    "status": "published",
-                    "viewCount": 0,
-                    "likeCount": 0,
-                    "commentCount": 0,
-                    "isTop": false,
-                    "allowComment": true,
-                    "tags": [
-                        "技术",
-                        "站点介绍",
-                        "NestJS"
-                    ],
-                    "seoKeywords": [
-                        "站点介绍",
-                        "技术栈",
-                        "NestJS",
-                        "博客系统"
-                    ],
-                    "seoDescription": "介绍本站点的技术栈和功能特性",
-                    "publishedAt": "2025-07-08T07:13:42.000Z",
-                    "author": {
-                        "id": 1,
-                        "email": "1181584752@qq.com",
-                        "username": "xiaoshenming",
-                        "avatar": "https://avatars.githubusercontent.com/u/113427145?v=4",
-                        "nickname": "xiaoshenming",
-                        "bio": null,
-                        "status": "active",
-                        "provider": "github",
-                        "providerId": "113427145",
-                        "emailVerified": true,
-                        "emailVerificationToken": null,
-                        "passwordResetToken": null,
-                        "passwordResetExpires": null,
-                        "lastLoginAt": null,
-                        "lastLoginIp": null,
-                        "githubUsername": null,
-                        "googleEmail": null,
-                        "createdAt": "2025-07-08T07:13:11.369Z",
-                        "updatedAt": "2025-07-08T07:13:11.369Z"
-                    },
-                    "authorId": 1,
-                    "categories": [
-                        {
-                            "id": 3,
-                            "name": "此站点",
-                            "slug": "about-site",
-                            "description": "站点介绍",
-                            "icon": null,
-                            "color": null,
-                            "sort": 2,
-                            "isActive": true,
-                            "blogCount": 0,
-                            "parentId": 1,
-                            "createdAt": "2025-07-08T07:12:48.868Z",
-                            "updatedAt": "2025-07-08T07:12:48.868Z"
-                        }
-                    ],
-                    "createdAt": "2025-07-08T07:13:41.917Z",
-                    "updatedAt": "2025-07-08T07:13:41.000Z"
-                },
-                {
                     "id": 1,
                     "title": "关于我",
                     "slug": "about-me",
@@ -285,12 +286,46 @@ curl 'http://localhost:3001/api/blogs?page=1&limit=1000' \
             ],
             "total": 4,
             "page": 1,
-            "limit": 1000,
+            "limit": 10,
             "totalPages": 1
         },
         "message": "操作成功",
-        "timestamp": "2025-07-08T12:33:01.771Z"
+        "timestamp": "2025-07-08T18:31:45.842Z"
     },
     "message": "操作成功",
-    "timestamp": "2025-07-08T12:33:01.771Z"
+    "timestamp": "2025-07-08T18:31:45.843Z"
+}
+curl 'http://localhost:3001/api/blogs/stats' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: zh-CN,zh;q=0.9' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiMTE4MTU4NDc1MkBxcS5jb20iLCJpYXQiOjE3NTE5OTk1MDUsImV4cCI6MTc1MjYwNDMwNX0.W7jbTkzM54apn0wOt9vMFHx6xFG_Ni4gLpUS-xn-tpQ' \
+  -H 'Connection: keep-alive' \
+  -b 'JSESSIONID=46EA3FF6F53D243E105C29B718548A02' \
+  -H 'If-None-Match: W/"fe-Soi/BffZ3mNWuDKw2L3APqgQzsU"' \
+  -H 'Referer: http://localhost:3001/admin/blogs' \
+  -H 'Sec-Fetch-Dest: empty' \
+  -H 'Sec-Fetch-Mode: cors' \
+  -H 'Sec-Fetch-Site: same-origin' \
+  -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0' \
+  -H 'X-Request-ID: 1751999506311-s1hz2yblm' \
+  -H 'sec-ch-ua: "Microsoft Edge";v="137", "Chromium";v="137", "Not/A)Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0' \
+  -H 'sec-ch-ua-platform: "Windows"'
+  {
+    "success": true,
+    "data": {
+        "success": true,
+        "data": {
+            "total": 4,
+            "published": 4,
+            "draft": 0,
+            "archived": 0,
+            "totalViews": 0,
+            "totalLikes": 0
+        },
+        "message": "操作成功",
+        "timestamp": "2025-07-08T18:31:46.365Z"
+    },
+    "message": "操作成功",
+    "timestamp": "2025-07-08T18:31:46.365Z"
 }
