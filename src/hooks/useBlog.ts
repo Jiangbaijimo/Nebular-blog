@@ -26,21 +26,52 @@ export function useBlogList(initialParams: BlogListParams = { page: 1, limit: 10
     async (params: BlogListParams) => {
       try {
         const response = await blogAPI.getBlogs(params);
+        console.log('API响应数据:', response);
+        
         // 确保返回的数据结构正确
         if (!response || typeof response !== 'object') {
           throw new Error('API返回数据格式错误');
         }
         
-        // 确保data字段是数组
-        const data = Array.isArray(response.data) ? response.data : [];
+        // 处理嵌套的响应结构 (response.data.data)
+        let actualData;
+        let actualTotal;
+        let actualPage;
+        let actualLimit;
+        let actualTotalPages;
+        
+        if (response.data && response.data.data) {
+          // 嵌套结构：{ success: true, data: { data: [...], total: ..., ... } }
+          actualData = Array.isArray(response.data.data.data) ? response.data.data.data : [];
+          actualTotal = response.data.data.total || 0;
+          actualPage = response.data.data.page || 1;
+          actualLimit = response.data.data.limit || 10;
+          actualTotalPages = response.data.data.totalPages || 0;
+        } else if (response.data && Array.isArray(response.data)) {
+          // 直接数组结构：{ data: [...], total: ..., ... }
+          actualData = response.data;
+          actualTotal = response.total || 0;
+          actualPage = response.page || 1;
+          actualLimit = response.limit || 10;
+          actualTotalPages = response.totalPages || 0;
+        } else {
+          // 其他结构，尝试直接使用
+          actualData = Array.isArray(response.data) ? response.data : [];
+          actualTotal = response.total || 0;
+          actualPage = response.page || 1;
+          actualLimit = response.limit || 10;
+          actualTotalPages = response.totalPages || 0;
+        }
+        
+        console.log('处理后的数据:', { actualData, actualTotal, actualPage, actualLimit, actualTotalPages });
         
         // 转换BlogListResponse为PaginationResult格式
         return {
-          data,
-          total: response.total || 0,
-          page: response.page || 1,
-          limit: response.limit || 10,
-          totalPages: response.totalPages || 0
+          data: actualData,
+          total: actualTotal,
+          page: actualPage,
+          limit: actualLimit,
+          totalPages: actualTotalPages
         };
       } catch (error) {
         console.error('获取博客列表失败:', error);

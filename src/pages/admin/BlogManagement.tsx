@@ -44,7 +44,7 @@ const sortOptions = [
   { value: 'createdAt', label: '创建时间' },
   { value: 'updatedAt', label: '更新时间' },
   { value: 'publishedAt', label: '发布时间' },
-  { value: 'views', label: '浏览量' },
+  { value: 'viewCount', label: '浏览量' },
   { value: 'title', label: '标题' }
 ];
 
@@ -95,8 +95,12 @@ const BlogManagement: React.FC = () => {
   const { submit: batchDelete, loading: batchDeleteLoading } = useBatchDeleteBlogs();
   const { submit: publishBlog, loading: publishLoading } = usePublishBlog();
 
+  // 修复数据获取逻辑，确保正确处理API响应数据
   const blogs = Array.isArray(blogData?.data) ? blogData.data : [];
   const totalCount = blogData?.total || 0;
+  
+  console.log('BlogManagement - blogData:', blogData);
+  console.log('BlogManagement - blogs:', blogs);
   const loading = blogsLoading;
 
   // 搜索处理
@@ -196,7 +200,7 @@ const BlogManagement: React.FC = () => {
   // 切换发布状态
   const handleTogglePublish = async (blog: Blog) => {
     try {
-      await publishBlog({ id: blog.id, published: !blog.published });
+      await publishBlog({ id: blog.id, published: blog.status !== 'published' });
       // 使用updateParams触发防抖刷新
       updateParams({});
     } catch (error) {
@@ -644,16 +648,16 @@ const BlogManagement: React.FC = () => {
                           </Link>
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {blog.excerpt || blog.content?.substring(0, 100) + '...'}
+                          {blog.summary || blog.content?.substring(0, 100) + '...'}
                         </div>
                         <div className="flex items-center gap-1 mt-2">
-                          {blog.tags?.map((tag) => (
+                          {blog.tags?.map((tag, index) => (
                             <span
-                              key={tag.id}
+                              key={typeof tag === 'string' ? tag : tag.id || index}
                               className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
                             >
                               <Tag className="w-3 h-3 mr-1" />
-                              {tag.name}
+                              {typeof tag === 'string' ? tag : tag.name}
                             </span>
                           ))}
                         </div>
@@ -664,7 +668,7 @@ const BlogManagement: React.FC = () => {
                     <div className="flex items-center">
                       <User className="w-4 h-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900 dark:text-white">
-                        {blog.author?.name || blog.author?.username || '未知'}
+                        {blog.author?.nickname || blog.author?.username || '未知'}
                       </span>
                     </div>
                   </td>
@@ -672,12 +676,12 @@ const BlogManagement: React.FC = () => {
                     <button
                       onClick={() => handleTogglePublish(blog)}
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
-                        blog.published
+                        blog.status === 'published'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200'
                           : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 hover:bg-yellow-200'
                       }`}
                     >
-                      {blog.published ? '已发布' : '草稿'}
+                      {blog.status === 'published' ? '已发布' : '草稿'}
                     </button>
                   </td>
                   <td className="px-6 py-4">
@@ -689,7 +693,7 @@ const BlogManagement: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center text-sm text-gray-900 dark:text-white">
                       <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
-                      {formatNumber(blog.views || 0)}
+                      {formatNumber(blog.viewCount || 0)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -718,13 +722,13 @@ const BlogManagement: React.FC = () => {
                         <Trash2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleTogglePublish(blog)}
-                        disabled={publishLoading}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-                        title={blog.published ? '取消发布' : '发布'}
-                      >
-                        <Archive className="w-4 h-4" />
-                      </button>
+                          onClick={() => handleTogglePublish(blog)}
+                          disabled={publishLoading}
+                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                          title={blog.status === 'published' ? '取消发布' : '发布'}
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
                     </div>
                   </td>
                 </tr>
