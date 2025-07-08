@@ -29,7 +29,7 @@ import {
   useBlogCategories,
   useBlogTags
 } from '../../hooks/useBlog';
-import type { Blog, BlogStatus } from '../../types/blog';
+import type { Blog, BlogStatus, BlogListParams } from '../../types/blog';
 
 // 状态选项
 const statusOptions = [
@@ -70,14 +70,21 @@ const BlogManagement: React.FC = () => {
     refresh: refreshBlogs
   } = useBlogList({
     page: 1,
-    limit: 10,
-    search: searchTerm,
-    status: statusFilter || undefined,
-    categoryId: categoryFilter || undefined,
-    tagId: tagFilter || undefined,
-    sortBy,
-    sortOrder
-  });
+    limit: 10
+  } as BlogListParams);
+
+  // 使用useEffect来同步过滤参数，避免在初始化时传入动态值
+  useEffect(() => {
+    updateParams({
+      search: searchTerm || undefined,
+      status: statusFilter || undefined,
+      categoryId: categoryFilter || undefined,
+      tagId: tagFilter || undefined,
+      sortBy,
+      sortOrder,
+      page: 1
+    } as Partial<BlogListParams>);
+  }, [searchTerm, statusFilter, categoryFilter, tagFilter, sortBy, sortOrder, updateParams]);
 
   const { data: stats, loading: statsLoading } = useBlogStats();
   const { data: categories } = useBlogCategories();
@@ -93,25 +100,21 @@ const BlogManagement: React.FC = () => {
   // 搜索处理
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    updateParams({ search: term, page: 1 });
   };
 
   // 状态过滤处理
   const handleStatusFilter = (status: BlogStatus | '') => {
     setStatusFilter(status);
-    updateParams({ status: status || undefined, page: 1 });
   };
 
   // 分类过滤处理
   const handleCategoryFilter = (categoryId: string) => {
     setCategoryFilter(categoryId);
-    updateParams({ categoryId: categoryId || undefined, page: 1 });
   };
 
   // 标签过滤处理
   const handleTagFilter = (tagId: string) => {
     setTagFilter(tagId);
-    updateParams({ tagId: tagId || undefined, page: 1 });
   };
 
   // 排序处理
@@ -119,7 +122,6 @@ const BlogManagement: React.FC = () => {
     const newOrder = sortBy === field && sortOrder === 'desc' ? 'asc' : 'desc';
     setSortBy(field);
     setSortOrder(newOrder);
-    updateParams({ sortBy: field, sortOrder: newOrder });
   };
 
   // 批量删除

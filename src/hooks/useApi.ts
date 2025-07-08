@@ -1,6 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { ApiResponse } from '../types/api';
 
+// 防抖函数
+function useDebounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  return useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  }, [fn, delay]) as T;
+}
+
 // API状态接口
 export interface ApiState<T> {
   data: T | null;
@@ -29,11 +44,13 @@ export interface PaginationParams {
 
 // 分页结果
 export interface PaginationResult<T> {
-  items: T[];
+  data: T[]; // 改为data字段以匹配BlogListResponse
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+  // 兼容性字段
+  items?: T[];
 }
 
 /**
@@ -195,21 +212,37 @@ export function useApi<T, P = any>(
 export function usePaginatedApi<T, P extends PaginationParams = PaginationParams>(
   apiFunction: (params: P) => Promise<PaginationResult<T>>,
   initialParams: P,
-  options: ApiOptions = {}
+  options: ApiOptions & { debounceDelay?: number } = {}
 ) {
+  const { debounceDelay = 300, ...apiOptions } = options;
   const [params, setParams] = useState<P>(initialParams);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const api = useApi(
     useCallback((p: P) => apiFunction(p || params), [apiFunction, params]),
-    options
+    { ...apiOptions, immediate: false }
   );
+
+  // 防抖的API执行函数
+  const debouncedExecute = useDebounce((newParams: P) => {
+    setIsUpdating(false);
+    api.execute(newParams);
+  }, debounceDelay);
 
   // 更新参数并重新获取数据
   const updateParams = useCallback((newParams: Partial<P>) => {
     const updatedParams = { ...params, ...newParams } as P;
     setParams(updatedParams);
-    return api.execute(updatedParams);
-  }, [params, api]);
+    setIsUpdating(true);
+    debouncedExecute(updatedParams);
+  }, [params, debouncedExecute]);
+
+  // 初始加载
+  useEffect(() => {
+    if (apiOptions.immediate !== false) {
+      api.execute(params);
+    }
+  }, []);
 
   // 跳转到指定页
   const goToPage = useCallback((page: number) => {
@@ -233,12 +266,20 @@ export function usePaginatedApi<T, P extends PaginationParams = PaginationParams
 
   return {
     ...api,
+    loading: api.loading || isUpdating,
     params,
     updateParams,
     goToPage,
     changePageSize,
     sort,
-    search
+    search,
+    // 添加分页信息
+    pagination: api.data ? {
+      page: api.data.page,
+      limit: api.data.limit,
+      total: api.data.total,
+      totalPages: api.data.totalPages
+    } : null
   };
 }
 

@@ -8,7 +8,8 @@ export interface BlogPost {
   coverImage?: string;
   tags: string[];
   categories: string[];
-  status: PostStatus;
+  status: PostStatus | BlogStatus; // 兼容两种状态类型
+  published?: boolean; // 添加published字段以兼容组件
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -90,14 +91,19 @@ export enum CommentStatus {
 }
 
 export interface BlogStats {
-  totalPosts: number;
-  publishedPosts: number;
-  draftPosts: number;
+  totalBlogs: number;
+  publishedBlogs: number;
+  draftBlogs: number;
+  archivedBlogs: number;
   totalViews: number;
   totalLikes: number;
   totalComments: number;
   categoriesCount: number;
   tagsCount: number;
+  // 兼容性字段
+  totalPosts?: number;
+  publishedPosts?: number;
+  draftPosts?: number;
 }
 
 export interface PostFilter {
@@ -125,18 +131,7 @@ export interface PaginatedPosts {
   totalPages: number;
 }
 
-// API 请求和响应类型
-export interface BlogListParams {
-  page?: number;
-  limit?: number;
-  status?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  category?: string;
-  tag?: string;
-  search?: string;
-  authorId?: string;
-}
+// API 请求和响应类型（已移动到文件末尾，避免重复定义）
 
 export interface BlogListResponse {
   data: BlogPost[];
@@ -279,3 +274,19 @@ export type Blog = BlogPost;
 export type PostStatusString = keyof typeof PostStatus;
 export type SyncStatusString = keyof typeof SyncStatus;
 export type CommentStatusString = keyof typeof CommentStatus;
+
+// 博客状态类型（用于组件）
+export type BlogStatus = 'published' | 'draft' | 'archived' | 'scheduled';
+
+// 博客列表查询参数（扩展版本）
+export interface BlogListParams {
+  page?: number;
+  limit?: number;
+  status?: BlogStatus | '';
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  categoryId?: string;
+  tagId?: string;
+  search?: string;
+  authorId?: string;
+}

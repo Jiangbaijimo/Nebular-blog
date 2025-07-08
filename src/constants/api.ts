@@ -92,6 +92,26 @@ export const API_ENDPOINTS = {
     BULK_DELETE: `${API_BASE_URL}/posts/batch-delete`,
     CATEGORIES: `${API_BASE_URL}/categories`,
     TAGS: `${API_BASE_URL}/tags`,
+    
+    // 博客统计
+    STATS: `${API_BASE_URL}/posts/stats`,
+    POPULAR: `${API_BASE_URL}/posts/popular`,
+    RECOMMENDED: `${API_BASE_URL}/posts/recommended`,
+    LATEST: `${API_BASE_URL}/posts/latest`,
+    
+    // 博客评论
+    COMMENTS: `${API_BASE_URL}/comments`,
+    
+    // 博客草稿
+    DRAFTS: `${API_BASE_URL}/posts/drafts`,
+    
+    // 博客版本
+    VERSIONS: `${API_BASE_URL}/posts/versions`,
+    
+    // 博客导入导出
+    EXPORT: `${API_BASE_URL}/posts/export`,
+    EXPORT_BULK: `${API_BASE_URL}/posts/export/bulk`,
+    IMPORT: `${API_BASE_URL}/posts/import`,
   },
 
   // 分类相关

@@ -23,7 +23,17 @@ import type {
  */
 export function useBlogList(initialParams: BlogListParams = { page: 1, limit: 10 }) {
   return usePaginatedApi(
-    (params: BlogListParams) => blogAPI.getBlogs(params),
+    async (params: BlogListParams) => {
+      const response = await blogAPI.getBlogs(params);
+      // 转换BlogListResponse为PaginationResult格式
+      return {
+        data: response.data,
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: response.totalPages
+      };
+    },
     initialParams,
     {
       immediate: true,
