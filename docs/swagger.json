@@ -133,6 +133,30 @@
         ]
       }
     },
+    "/api/auth/verify-token": {
+      "get": {
+        "operationId": "AuthController_verifyToken",
+        "summary": "验证token有效性",
+        "description": "检查当前token是否有效（未被注销）",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "验证成功"
+          },
+          "401": {
+            "description": "token无效或已失效"
+          }
+        },
+        "tags": [
+          "认证管理"
+        ],
+        "security": [
+          {
+            "JWT-auth": []
+          }
+        ]
+      }
+    },
     "/api/auth/google": {
       "get": {
         "operationId": "AuthController_googleAuth",
@@ -182,6 +206,35 @@
         "responses": {
           "200": {
             "description": ""
+          }
+        },
+        "tags": [
+          "认证管理"
+        ]
+      }
+    },
+    "/api/auth/exchange-code": {
+      "post": {
+        "operationId": "AuthController_exchangeCode",
+        "summary": "授权码交换令牌",
+        "description": "使用OAuth授权码交换访问令牌和刷新令牌",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExchangeCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "交换成功"
+          },
+          "401": {
+            "description": "授权码无效或已过期"
           }
         },
         "tags": [
@@ -259,6 +312,42 @@
           },
           "409": {
             "description": "邮箱或用户名已存在"
+          }
+        },
+        "tags": [
+          "认证管理"
+        ]
+      }
+    },
+    "/api/auth/oauth/health": {
+      "get": {
+        "operationId": "AuthController_checkOAuthHealth",
+        "summary": "OAuth 配置健康检查",
+        "description": "检查 OAuth 提供商的配置状态，用于开发调试",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "检查成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "availableProviders": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "可用的 OAuth 提供商列表"
+                    },
+                    "providerStatus": {
+                      "type": "object",
+                      "description": "各提供商的配置状态"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "tags": [
@@ -4231,6 +4320,10 @@
         "properties": {}
       },
       "RefreshTokenDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ExchangeCodeDto": {
         "type": "object",
         "properties": {}
       },
