@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search,
   Filter,
@@ -17,7 +17,8 @@ import {
   FileText,
   Globe,
   Clock,
-  TrendingUp
+  TrendingUp,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -48,8 +49,6 @@ const sortOptions = [
   { value: 'title', label: '标题' }
 ];
 
-
-
 const BlogManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<BlogStatus | ''>('');
@@ -70,11 +69,14 @@ const BlogManagement: React.FC = () => {
     refresh: refreshBlogs
   } = useBlogList({
     page: 1,
-    limit: 10
+    limit: 10,
+    search: searchTerm || undefined,
+    status: statusFilter || undefined,
+    categoryId: categoryFilter || undefined,
+    tagId: tagFilter || undefined,
+    sortBy,
+    sortOrder
   } as BlogListParams);
-
-  // 移除这个useEffect，因为初始参数已经在useBlogList中设置了
-  // 避免重复的API调用
 
   // 延迟加载统计数据，避免初始页面加载时过多API调用
   const { data: stats, loading: statsLoading, execute: loadStats } = useBlogStats();
@@ -91,14 +93,34 @@ const BlogManagement: React.FC = () => {
     
     return () => clearTimeout(timer);
   }, [loadStats, loadCategories, loadTags]);
+  
   const { submit: deleteBlog, loading: deleteLoading } = useDeleteBlog();
   const { submit: batchDelete, loading: batchDeleteLoading } = useBatchDeleteBlogs();
   const { submit: publishBlog, loading: publishLoading } = usePublishBlog();
 
-  // 修复数据获取逻辑，确保正确处理API响应数据
-  let blogs = Array.isArray(blogData?.data) ? blogData.data : [];
-  const totalCount = blogData?.total || 0;
+  // 使用useMemo优化数据处理，确保正确处理API响应数据
+  const blogs = useMemo(() => {
+    if (!blogData || !Array.isArray(blogData.data)) {
+      return [];
+    }
+    return blogData.data.map(blog => ({
+      ...blog,
+      id: blog.id?.toString() || '',
+      title: blog.title || '无标题',
+      summary: blog.summary || blog.content?.substring(0, 100) + '...' || '暂无摘要',
+      status: blog.status || 'draft',
+      viewCount: blog.viewCount || 0,
+      likeCount: blog.likeCount || 0,
+      commentCount: blog.commentCount || 0,
+      tags: Array.isArray(blog.tags) ? blog.tags : [],
+      categories: Array.isArray(blog.categories) ? blog.categories : [],
+      author: blog.author || { nickname: '未知作者', username: 'unknown' },
+      createdAt: blog.createdAt || new Date().toISOString(),
+      publishedAt: blog.publishedAt || blog.createdAt || new Date().toISOString()
+    }));
+  }, [blogData]);
   
+  const totalCount = blogData?.total || 0;
   const loading = blogsLoading;
   
   console.log('BlogManagement - 完整响应数据:', blogData);
@@ -107,32 +129,6 @@ const BlogManagement: React.FC = () => {
   console.log('BlogManagement - 分页信息:', pagination);
   console.log('BlogManagement - 加载状态:', loading);
   console.log('BlogManagement - 错误信息:', blogsError);
-  
-  // 临时测试数据 - 当API数据为空时使用
-  if (blogs.length === 0 && !loading && !blogsError) {
-    console.log('使用测试数据');
-    blogs = [
-      {
-        id: 'test-1',
-        title: '测试文章标题',
-        summary: '这是一篇测试文章的摘要内容...',
-        content: '这是测试文章的完整内容',
-        status: 'published' as const,
-        author: {
-          id: 'author-1',
-          nickname: '测试作者',
-          username: 'testuser'
-        },
-        tags: ['测试', '博客'],
-        categories: [{ id: 'cat-1', name: '技术' }],
-        viewCount: 123,
-        publishedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        slug: 'test-article'
-      }
-    ];
-  }
 
   // 搜索处理
   const handleSearch = useCallback((term: string) => {
@@ -162,10 +158,10 @@ const BlogManagement: React.FC = () => {
   }, [updateParams]);
 
   // 标签过滤处理
-  const handleTagFilter = useCallback((tagName: string) => {
-    setTagFilter(tagName);
+  const handleTagFilter = useCallback((tagId: string) => {
+    setTagFilter(tagId);
     updateParams({
-      tag: tagName || undefined,
+      tagId: tagId || undefined,
       page: 1
     } as Partial<BlogListParams>);
   }, [updateParams]);
@@ -190,7 +186,6 @@ const BlogManagement: React.FC = () => {
       try {
         await batchDelete(selectedPosts);
         setSelectedPosts([]);
-        // 使用updateParams触发防抖刷新，而不是直接refreshBlogs
         updateParams({});
       } catch (error) {
         console.error('批量删除失败:', error);
@@ -203,12 +198,10 @@ const BlogManagement: React.FC = () => {
     if (selectedPosts.length === 0) return;
     
     try {
-      // 这里需要实现批量更新状态的API
       for (const postId of selectedPosts) {
         await publishBlog({ id: postId, published: false });
       }
       setSelectedPosts([]);
-      // 使用updateParams触发防抖刷新
       updateParams({});
     } catch (error) {
       console.error('批量归档失败:', error);
@@ -220,7 +213,6 @@ const BlogManagement: React.FC = () => {
     if (window.confirm('确定要删除这篇文章吗？')) {
       try {
         await deleteBlog(postId);
-        // 使用updateParams触发防抖刷新
         updateParams({});
       } catch (error) {
         console.error('删除文章失败:', error);
@@ -232,29 +224,14 @@ const BlogManagement: React.FC = () => {
   const handleTogglePublish = async (blog: Blog) => {
     try {
       await publishBlog({ id: blog.id, published: blog.status !== 'published' });
-      // 使用updateParams触发防抖刷新
       updateParams({});
     } catch (error) {
       console.error('更新发布状态失败:', error);
     }
   };
 
-  // 获取状态颜色
-  const getStatusColor = (status: BlogStatus) => {
-    switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-    }
-  };
-
   // 获取状态文本
-  const getStatusText = (status: BlogStatus) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case 'published':
         return '已发布';
@@ -262,6 +239,8 @@ const BlogManagement: React.FC = () => {
         return '草稿';
       case 'archived':
         return '已归档';
+      case 'pending':
+        return '待审核';
       default:
         return '未知';
     }
@@ -274,8 +253,11 @@ const BlogManagement: React.FC = () => {
 
   // 格式化数字
   const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    }
     if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'k';
+      return (num / 1000).toFixed(1) + 'K';
     }
     return num.toString();
   };
@@ -323,75 +305,6 @@ const BlogManagement: React.FC = () => {
             >
               重试
             </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 加载状态
-  if (loading && !blogData) {
-    return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          {/* Header skeleton */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
-            </div>
-            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
-          </div>
-          
-          {/* Stats skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg mr-4"></div>
-                  <div className="flex-1">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
-                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Filters skeleton */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-            <div className="flex gap-4">
-              <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="w-20 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            </div>
-          </div>
-          
-          {/* Table skeleton */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-6">
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
-              <div className="space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center space-x-4">
-                    <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="flex-1">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                    <div className="w-20 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="w-24 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="flex space-x-2">
-                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -476,34 +389,27 @@ const BlogManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters and Search */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
+      {/* 搜索和筛选 */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="搜索文章标题或内容..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="搜索文章标题或内容..."
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              />
+            </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <Filter className="w-4 h-4" />
-              筛选
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-            </button>
-            
+          <div className="flex gap-2">
             <select
               value={statusFilter}
               onChange={(e) => handleStatusFilter(e.target.value as BlogStatus | '')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
             >
               {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -513,25 +419,26 @@ const BlogManagement: React.FC = () => {
             </select>
             
             <button
-              onClick={() => updateParams({})}
-              disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              刷新
+              <Filter className="w-4 h-4" />
+              筛选
             </button>
             
-            <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <Download className="w-4 h-4" />
-              导出
+            <button
+              onClick={() => updateParams({})}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              刷新
             </button>
           </div>
         </div>
         
-        {/* 展开的筛选器 */}
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   分类
@@ -539,7 +446,7 @@ const BlogManagement: React.FC = () => {
                 <select
                   value={categoryFilter}
                   onChange={(e) => handleCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">全部分类</option>
                   {categories?.map(category => (
@@ -557,38 +464,13 @@ const BlogManagement: React.FC = () => {
                 <select
                   value={tagFilter}
                   onChange={(e) => handleTagFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                 >
                   <option value="">全部标签</option>
                   {tags?.map(tag => (
                     <option key={tag.id} value={tag.id}>
                       {tag.name}
                     </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  排序方式
-                </label>
-                <select
-                  value={`${sortBy}-${sortOrder}`}
-                  onChange={(e) => {
-                    const [field, order] = e.target.value.split('-');
-                    handleSort(field);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {sortOptions.map(option => (
-                    <React.Fragment key={option.value}>
-                      <option value={`${option.value}-desc`}>
-                        {option.label} (降序)
-                      </option>
-                      <option value={`${option.value}-asc`}>
-                        {option.label} (升序)
-                      </option>
-                    </React.Fragment>
                   ))}
                 </select>
               </div>
@@ -659,141 +541,155 @@ const BlogManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {blogs.map((blog) => (
-                <tr key={blog.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              {blogs.length > 0 ? blogs.map((blog) => (
+                <tr key={blog.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="flex items-center">
+                    <div className="flex items-start space-x-3">
                       <input
                         type="checkbox"
                         checked={selectedPosts.includes(blog.id)}
                         onChange={() => handleSelectPost(blog.id)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                        className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2"
                       />
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           <Link
                             to={`/admin/blog/${blog.id}`}
-                            className="hover:text-blue-600 dark:hover:text-blue-400"
+                            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                           >
-                            {blog.title}
+                            {blog.title || '无标题'}
                           </Link>
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {blog.summary || blog.content?.substring(0, 100) + '...'}
+                          {blog.summary || '暂无摘要'}
                         </div>
-                        <div className="flex items-center gap-1 mt-2">
-                          {blog.tags?.map((tag, index) => (
-                            <span
-                              key={typeof tag === 'string' ? tag : tag.id || index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
-                            >
-                              <Tag className="w-3 h-3 mr-1" />
-                              {typeof tag === 'string' ? tag : tag.name}
-                            </span>
-                          ))}
-                        </div>
+                        {blog.tags && blog.tags.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1 mt-2">
+                            {blog.tags.slice(0, 3).map((tag, index) => (
+                              <span
+                                key={typeof tag === 'string' ? tag : tag.id || index}
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                              >
+                                <Tag className="w-3 h-3 mr-1" />
+                                {typeof tag === 'string' ? tag : tag.name}
+                              </span>
+                            ))}
+                            {blog.tags.length > 3 && (
+                              <span className="text-xs text-gray-400">+{blog.tags.length - 3}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
-                      <User className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900 dark:text-white">
-                        {blog.author?.nickname || blog.author?.username || '未知'}
-                      </span>
+                      <div className="flex-shrink-0 w-8 h-8">
+                        {blog.author?.avatar ? (
+                          <img
+                            className="w-8 h-8 rounded-full"
+                            src={blog.author.avatar}
+                            alt={blog.author.nickname || blog.author.username}
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <User className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {blog.author?.nickname || blog.author?.username || '未知作者'}
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <button
                       onClick={() => handleTogglePublish(blog)}
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                      disabled={publishLoading}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
                         blog.status === 'published'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200'
-                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 hover:bg-yellow-200'
+                          : blog.status === 'draft'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 hover:bg-yellow-200'
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400 hover:bg-gray-200'
                       }`}
                     >
-                      {blog.status === 'published' ? '已发布' : '草稿'}
+                      {getStatusText(blog.status)}
                     </button>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                      <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                      {formatDate(blog.publishedAt || blog.createdAt)}
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                        {formatDate(blog.publishedAt || blog.createdAt)}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                      <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
-                      {formatNumber(blog.viewCount || 0)}
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      <div className="flex items-center">
+                        <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
+                        {formatNumber(blog.viewCount || 0)}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Link
                         to={`/blog/${blog.slug}`}
                         target="_blank"
-                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="预览"
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        title="预览文章"
                       >
                         <Eye className="w-4 h-4" />
                       </Link>
                       <Link
                         to={`/admin/blog/${blog.id}/edit`}
-                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-                        title="编辑"
+                        className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                        title="编辑文章"
                       >
                         <Edit className="w-4 h-4" />
                       </Link>
                       <button
                         onClick={() => handleDeletePost(blog.id)}
                         disabled={deleteLoading}
-                        className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                        title="删除"
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                        title="删除文章"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                      <button
-                          onClick={() => handleTogglePublish(blog)}
-                          disabled={publishLoading}
-                          className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-                          title={blog.status === 'published' ? '取消发布' : '发布'}
-                        >
-                          <Archive className="w-4 h-4" />
-                        </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="text-gray-400 mb-4">
+                      <FileText className="w-12 h-12 mx-auto" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      {loading ? '加载中...' : '暂无博客文章'}
+                    </h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-4">
+                      {loading ? '正在获取博客列表' : '开始创建您的第一篇文章吧'}
+                    </p>
+                    {!loading && (
+                      <Link
+                        to="/admin/blog/new"
+                        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        新建文章
+                      </Link>
+                    )}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-
-        {blogs.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
-              <FileText className="w-12 h-12 mx-auto" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {searchTerm || statusFilter || categoryFilter || tagFilter
-                ? '未找到匹配的文章'
-                : '暂无文章'}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              {searchTerm || statusFilter || categoryFilter || tagFilter
-                ? '尝试调整搜索条件或筛选器'
-                : '开始创建您的第一篇文章吧'}
-            </p>
-            {!searchTerm && !statusFilter && !categoryFilter && !tagFilter && (
-              <Link
-                to="/admin/blog/new"
-                className="inline-flex items-center gap-2 mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                新建文章
-              </Link>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Pagination */}
@@ -816,7 +712,6 @@ const BlogManagement: React.FC = () => {
                 上一页
               </button>
               
-              {/* 页码按钮 */}
               {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
                 const pageNum = Math.max(1, pagination.page - 2) + i;
                 if (pageNum > pagination.totalPages) return null;

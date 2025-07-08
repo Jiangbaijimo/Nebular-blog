@@ -33,41 +33,78 @@ export function useBlogList(initialParams: BlogListParams = { page: 1, limit: 10
           throw new Error('API返回数据格式错误');
         }
         
-        // 处理嵌套的响应结构 (response.data.data)
-        let actualData;
-        let actualTotal;
-        let actualPage;
-        let actualLimit;
-        let actualTotalPages;
+        // 处理多层嵌套的响应结构
+        let actualData = [];
+        let actualTotal = 0;
+        let actualPage = 1;
+        let actualLimit = 10;
+        let actualTotalPages = 0;
         
-        if (response.data && response.data.data) {
-          // 嵌套结构：{ success: true, data: { data: [...], total: ..., ... } }
-          actualData = Array.isArray(response.data.data.data) ? response.data.data.data : [];
-          actualTotal = response.data.data.total || 0;
-          actualPage = response.data.data.page || 1;
-          actualLimit = response.data.data.limit || 10;
-          actualTotalPages = response.data.data.totalPages || 0;
-        } else if (response.data && Array.isArray(response.data)) {
-          // 直接数组结构：{ data: [...], total: ..., ... }
+        // 处理嵌套结构：{ success: true, data: { success: true, data: { data: [...], total: ..., ... } } }
+        if (response.data && response.data.data && response.data.data.data) {
+          const innerData = response.data.data;
+          actualData = Array.isArray(innerData.data) ? innerData.data : [];
+          actualTotal = innerData.total || 0;
+          actualPage = innerData.page || 1;
+          actualLimit = innerData.limit || 10;
+          actualTotalPages = innerData.totalPages || Math.ceil(actualTotal / actualLimit);
+        }
+        // 处理二层嵌套：{ success: true, data: { data: [...], total: ..., ... } }
+        else if (response.data && response.data.data) {
+          actualData = Array.isArray(response.data.data) ? response.data.data : [];
+          actualTotal = response.data.total || 0;
+          actualPage = response.data.page || 1;
+          actualLimit = response.data.limit || 10;
+          actualTotalPages = response.data.totalPages || Math.ceil(actualTotal / actualLimit);
+        }
+        // 处理直接结构：{ data: [...], total: ..., ... }
+        else if (response.data && Array.isArray(response.data)) {
           actualData = response.data;
           actualTotal = response.total || 0;
           actualPage = response.page || 1;
           actualLimit = response.limit || 10;
-          actualTotalPages = response.totalPages || 0;
-        } else {
-          // 其他结构，尝试直接使用
+          actualTotalPages = response.totalPages || Math.ceil(actualTotal / actualLimit);
+        }
+        // 兜底处理
+        else {
           actualData = Array.isArray(response.data) ? response.data : [];
-          actualTotal = response.total || 0;
+          actualTotal = response.total || actualData.length;
           actualPage = response.page || 1;
           actualLimit = response.limit || 10;
-          actualTotalPages = response.totalPages || 0;
+          actualTotalPages = response.totalPages || Math.ceil(actualTotal / actualLimit);
         }
         
-        console.log('处理后的数据:', { actualData, actualTotal, actualPage, actualLimit, actualTotalPages });
+        // 数据标准化处理
+        const normalizedData = actualData.map((blog: any) => ({
+          ...blog,
+          id: blog.id?.toString() || '',
+          title: blog.title || '无标题',
+          slug: blog.slug || '',
+          summary: blog.summary || '',
+          content: blog.content || '',
+          status: blog.status || 'draft',
+          viewCount: blog.viewCount || 0,
+          likeCount: blog.likeCount || 0,
+          commentCount: blog.commentCount || 0,
+          tags: Array.isArray(blog.tags) ? blog.tags : [],
+          categories: Array.isArray(blog.categories) ? blog.categories : [],
+          author: blog.author || { nickname: '未知作者', username: 'unknown' },
+          createdAt: blog.createdAt || new Date().toISOString(),
+          updatedAt: blog.updatedAt || new Date().toISOString(),
+          publishedAt: blog.publishedAt || blog.createdAt || new Date().toISOString()
+        }));
         
-        // 转换BlogListResponse为PaginationResult格式
+        console.log('处理后的数据:', { 
+          data: normalizedData, 
+          total: actualTotal, 
+          page: actualPage, 
+          limit: actualLimit, 
+          totalPages: actualTotalPages 
+        });
+        
+        // 转换为PaginationResult格式
         return {
-          data: actualData,
+          data: normalizedData,
           total: actualTotal,
           page: actualPage,
           limit: actualLimit,
