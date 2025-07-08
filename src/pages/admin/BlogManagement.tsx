@@ -1,98 +1,182 @@
 import React, { useState, useEffect } from 'react';
 import {
   Search,
+  Filter,
   Plus,
   Edit,
   Trash2,
   Eye,
-  Filter,
-  MoreHorizontal,
+  Archive,
   Calendar,
   User,
   Tag,
+  MoreHorizontal,
+  ChevronDown,
+  Download,
+  RefreshCw,
+  FileText,
+  Globe,
+  Clock,
   TrendingUp
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import {
+  useBlogList,
+  useDeleteBlog,
+  useBatchDeleteBlogs,
+  usePublishBlog,
+  useBlogStats,
+  useBlogCategories,
+  useBlogTags
+} from '../../hooks/useBlog';
+import type { Blog, BlogStatus } from '../../types/blog';
 
-interface BlogPost {
-  id: string;
-  title: string;
-  author: string;
-  status: 'published' | 'draft' | 'archived';
-  publishDate: string;
-  views: number;
-  tags: string[];
-  excerpt: string;
-}
+// 状态选项
+const statusOptions = [
+  { value: '', label: '全部状态' },
+  { value: 'published', label: '已发布' },
+  { value: 'draft', label: '草稿' },
+  { value: 'archived', label: '已归档' }
+];
+
+// 排序选项
+const sortOptions = [
+  { value: 'createdAt', label: '创建时间' },
+  { value: 'updatedAt', label: '更新时间' },
+  { value: 'publishedAt', label: '发布时间' },
+  { value: 'views', label: '浏览量' },
+  { value: 'title', label: '标题' }
+];
+
+
 
 const BlogManagement: React.FC = () => {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<BlogStatus | ''>('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  useEffect(() => {
-    // 模拟数据加载
-    const loadPosts = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setPosts([
-        {
-          id: '1',
-          title: 'Tauri开发完整指南',
-          author: '张三',
-          status: 'published',
-          publishDate: '2024-01-15',
-          views: 1234,
-          tags: ['Tauri', 'Rust', '桌面应用'],
-          excerpt: '深入了解如何使用Tauri构建现代桌面应用程序...'
-        },
-        {
-          id: '2',
-          title: 'React最佳实践总结',
-          author: '李四',
-          status: 'published',
-          publishDate: '2024-01-12',
-          views: 856,
-          tags: ['React', 'JavaScript', '前端'],
-          excerpt: '总结React开发中的最佳实践和常见模式...'
-        },
-        {
-          id: '3',
-          title: 'TypeScript高级特性',
-          author: '王五',
-          status: 'draft',
-          publishDate: '2024-01-10',
-          views: 0,
-          tags: ['TypeScript', '类型系统'],
-          excerpt: '探索TypeScript的高级类型特性和应用场景...'
-        },
-        {
-          id: '4',
-          title: 'Tailwind CSS v4新特性',
-          author: '赵六',
-          status: 'archived',
-          publishDate: '2024-01-08',
-          views: 432,
-          tags: ['CSS', 'Tailwind', '样式'],
-          excerpt: '了解Tailwind CSS v4带来的新功能和改进...'
-        }
-      ]);
-      
-      setLoading(false);
-    };
-
-    loadPosts();
-  }, []);
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // 使用博客相关的hooks
+  const {
+    data: blogData,
+    loading: blogsLoading,
+    error: blogsError,
+    pagination,
+    updateParams,
+    refresh: refreshBlogs
+  } = useBlogList({
+    page: 1,
+    limit: 10,
+    search: searchTerm,
+    status: statusFilter || undefined,
+    categoryId: categoryFilter || undefined,
+    tagId: tagFilter || undefined,
+    sortBy,
+    sortOrder
   });
 
-  const getStatusColor = (status: string) => {
+  const { data: stats, loading: statsLoading } = useBlogStats();
+  const { data: categories } = useBlogCategories();
+  const { data: tags } = useBlogTags();
+  const { submit: deleteBlog, loading: deleteLoading } = useDeleteBlog();
+  const { submit: batchDelete, loading: batchDeleteLoading } = useBatchDeleteBlogs();
+  const { submit: publishBlog, loading: publishLoading } = usePublishBlog();
+
+  const blogs = blogData?.data || [];
+  const totalCount = blogData?.total || 0;
+  const loading = blogsLoading;
+
+  // 搜索处理
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    updateParams({ search: term, page: 1 });
+  };
+
+  // 状态过滤处理
+  const handleStatusFilter = (status: BlogStatus | '') => {
+    setStatusFilter(status);
+    updateParams({ status: status || undefined, page: 1 });
+  };
+
+  // 分类过滤处理
+  const handleCategoryFilter = (categoryId: string) => {
+    setCategoryFilter(categoryId);
+    updateParams({ categoryId: categoryId || undefined, page: 1 });
+  };
+
+  // 标签过滤处理
+  const handleTagFilter = (tagId: string) => {
+    setTagFilter(tagId);
+    updateParams({ tagId: tagId || undefined, page: 1 });
+  };
+
+  // 排序处理
+  const handleSort = (field: string) => {
+    const newOrder = sortBy === field && sortOrder === 'desc' ? 'asc' : 'desc';
+    setSortBy(field);
+    setSortOrder(newOrder);
+    updateParams({ sortBy: field, sortOrder: newOrder });
+  };
+
+  // 批量删除
+  const handleBatchDelete = async () => {
+    if (selectedPosts.length === 0) return;
+    
+    if (window.confirm(`确定要删除选中的 ${selectedPosts.length} 篇文章吗？`)) {
+      try {
+        await batchDelete(selectedPosts);
+        setSelectedPosts([]);
+        refreshBlogs();
+      } catch (error) {
+        console.error('批量删除失败:', error);
+      }
+    }
+  };
+
+  // 批量归档
+  const handleBatchArchive = async () => {
+    if (selectedPosts.length === 0) return;
+    
+    try {
+      // 这里需要实现批量更新状态的API
+      for (const postId of selectedPosts) {
+        await publishBlog({ id: postId, published: false });
+      }
+      setSelectedPosts([]);
+      refreshBlogs();
+    } catch (error) {
+      console.error('批量归档失败:', error);
+    }
+  };
+
+  // 删除单个文章
+  const handleDeletePost = async (postId: string) => {
+    if (window.confirm('确定要删除这篇文章吗？')) {
+      try {
+        await deleteBlog(postId);
+        refreshBlogs();
+      } catch (error) {
+        console.error('删除文章失败:', error);
+      }
+    }
+  };
+
+  // 切换发布状态
+  const handleTogglePublish = async (blog: Blog) => {
+    try {
+      await publishBlog({ id: blog.id, published: !blog.published });
+      refreshBlogs();
+    } catch (error) {
+      console.error('更新发布状态失败:', error);
+    }
+  };
+
+  // 获取状态颜色
+  const getStatusColor = (status: BlogStatus) => {
     switch (status) {
       case 'published':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
@@ -105,7 +189,8 @@ const BlogManagement: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
+  // 获取状态文本
+  const getStatusText = (status: BlogStatus) => {
     switch (status) {
       case 'published':
         return '已发布';
@@ -114,8 +199,21 @@ const BlogManagement: React.FC = () => {
       case 'archived':
         return '已归档';
       default:
-        return status;
+        return '未知';
     }
+  };
+
+  // 格式化日期
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('zh-CN');
+  };
+
+  // 格式化数字
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'k';
+    }
+    return num.toString();
   };
 
   const handleSelectPost = (postId: string) => {
@@ -127,28 +225,109 @@ const BlogManagement: React.FC = () => {
   };
 
   const handleSelectAll = () => {
-    if (selectedPosts.length === filteredPosts.length) {
+    if (selectedPosts.length === blogs.length) {
       setSelectedPosts([]);
     } else {
-      setSelectedPosts(filteredPosts.map(post => post.id));
+      setSelectedPosts(blogs.map(blog => blog.id));
     }
   };
 
-  if (loading) {
+  // 错误处理
+  if (blogsError) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">文章管理</h1>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="text-red-400 mr-3">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                加载失败
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                {blogsError.message || '获取博客列表时发生错误'}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={refreshBlogs}
+              className="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-200 dark:hover:bg-red-700 transition-colors"
+            >
+              重试
+            </button>
+          </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-          <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-4">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+      </div>
+    );
+  }
+
+  // 加载状态
+  if (loading && !blogData) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-64"></div>
+            </div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+          </div>
+          
+          {/* Stats skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-lg mr-4"></div>
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+          
+          {/* Filters skeleton */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+            <div className="flex gap-4">
+              <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="w-20 h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+          </div>
+          
+          {/* Table skeleton */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="p-6">
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4"></div>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <div className="w-4 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                    </div>
+                    <div className="w-20 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="w-24 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="flex space-x-2">
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -165,39 +344,193 @@ const BlogManagement: React.FC = () => {
             管理您的博客文章，包括发布、编辑和删除操作。
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+        <Link
+          to="/admin/blog/new"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+        >
           <Plus className="w-4 h-4" />
           新建文章
-        </button>
+        </Link>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">总文章数</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {statsLoading ? '...' : (stats?.totalBlogs || 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+              <Globe className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">已发布</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {statsLoading ? '...' : (stats?.publishedBlogs || 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+              <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">草稿</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {statsLoading ? '...' : (stats?.draftBlogs || 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+              <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">总浏览量</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {statsLoading ? '...' : formatNumber(stats?.totalViews || 0)}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters and Search */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="搜索文章标题或作者..."
+              placeholder="搜索文章标题或内容..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              筛选
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+            
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleStatusFilter(e.target.value as BlogStatus | '')}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">全部状态</option>
-              <option value="published">已发布</option>
-              <option value="draft">草稿</option>
-              <option value="archived">已归档</option>
+              {statusOptions.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
+            
+            <button
+              onClick={refreshBlogs}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
+            
+            <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <Download className="w-4 h-4" />
+              导出
+            </button>
           </div>
         </div>
+        
+        {/* 展开的筛选器 */}
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  分类
+                </label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => handleCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">全部分类</option>
+                  {categories?.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  标签
+                </label>
+                <select
+                  value={tagFilter}
+                  onChange={(e) => handleTagFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">全部标签</option>
+                  {tags?.map(tag => (
+                    <option key={tag.id} value={tag.id}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  排序方式
+                </label>
+                <select
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [field, order] = e.target.value.split('-');
+                    handleSort(field);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {sortOptions.map(option => (
+                    <React.Fragment key={option.value}>
+                      <option value={`${option.value}-desc`}>
+                        {option.label} (降序)
+                      </option>
+                      <option value={`${option.value}-asc`}>
+                        {option.label} (升序)
+                      </option>
+                    </React.Fragment>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Posts Table */}
@@ -208,7 +541,7 @@ const BlogManagement: React.FC = () => {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={selectedPosts.length === filteredPosts.length && filteredPosts.length > 0}
+                  checked={selectedPosts.length === blogs.length && blogs.length > 0}
                   onChange={handleSelectAll}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
@@ -219,10 +552,17 @@ const BlogManagement: React.FC = () => {
             </div>
             {selectedPosts.length > 0 && (
               <div className="flex items-center gap-2">
-                <button className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
-                  批量删除
+                <button
+                  onClick={handleBatchDelete}
+                  disabled={batchDeleteLoading}
+                  className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                >
+                  {batchDeleteLoading ? '删除中...' : '批量删除'}
                 </button>
-                <button className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                <button
+                  onClick={handleBatchArchive}
+                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
                   批量归档
                 </button>
               </div>
@@ -255,31 +595,36 @@ const BlogManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredPosts.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+              {blogs.map((blog) => (
+                <tr key={blog.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={selectedPosts.includes(post.id)}
-                        onChange={() => handleSelectPost(post.id)}
+                        checked={selectedPosts.includes(blog.id)}
+                        onChange={() => handleSelectPost(blog.id)}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
                       />
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {post.title}
+                          <Link
+                            to={`/admin/blog/${blog.id}`}
+                            className="hover:text-blue-600 dark:hover:text-blue-400"
+                          >
+                            {blog.title}
+                          </Link>
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {post.excerpt}
+                          {blog.excerpt || blog.content?.substring(0, 100) + '...'}
                         </div>
                         <div className="flex items-center gap-1 mt-2">
-                          {post.tags.map((tag, index) => (
+                          {blog.tags?.map((tag) => (
                             <span
-                              key={index}
+                              key={tag.id}
                               className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
                             >
                               <Tag className="w-3 h-3 mr-1" />
-                              {tag}
+                              {tag.name}
                             </span>
                           ))}
                         </div>
@@ -289,39 +634,67 @@ const BlogManagement: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <User className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900 dark:text-white">{post.author}</span>
+                      <span className="text-sm text-gray-900 dark:text-white">
+                        {blog.author?.name || blog.author?.username || '未知'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(post.status)}`}>
-                      {getStatusText(post.status)}
-                    </span>
+                    <button
+                      onClick={() => handleTogglePublish(blog)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors ${
+                        blog.published
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 hover:bg-green-200'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 hover:bg-yellow-200'
+                      }`}
+                    >
+                      {blog.published ? '已发布' : '草稿'}
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center text-sm text-gray-900 dark:text-white">
                       <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                      {post.publishDate}
+                      {formatDate(blog.publishedAt || blog.createdAt)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center text-sm text-gray-900 dark:text-white">
                       <TrendingUp className="w-4 h-4 text-gray-400 mr-2" />
-                      {post.views.toLocaleString()}
+                      {formatNumber(blog.views || 0)}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                      <Link
+                        to={`/blog/${blog.slug}`}
+                        target="_blank"
+                        className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="预览"
+                      >
                         <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-400 hover:text-green-600 transition-colors">
+                      </Link>
+                      <Link
+                        to={`/admin/blog/${blog.id}/edit`}
+                        className="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                        title="编辑"
+                      >
                         <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
+                      </Link>
+                      <button
+                        onClick={() => handleDeletePost(blog.id)}
+                        disabled={deleteLoading}
+                        className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                        title="删除"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
+                      <button
+                        onClick={() => handleTogglePublish(blog)}
+                        disabled={publishLoading}
+                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                        title={blog.published ? '取消发布' : '发布'}
+                      >
+                        <Archive className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -331,37 +704,79 @@ const BlogManagement: React.FC = () => {
           </table>
         </div>
 
-        {filteredPosts.length === 0 && (
+        {blogs.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="text-gray-400 mb-4">
-              <Search className="w-12 h-12 mx-auto" />
+              <FileText className="w-12 h-12 mx-auto" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              未找到匹配的文章
+              {searchTerm || statusFilter || categoryFilter || tagFilter
+                ? '未找到匹配的文章'
+                : '暂无文章'}
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              尝试调整搜索条件或筛选器
+              {searchTerm || statusFilter || categoryFilter || tagFilter
+                ? '尝试调整搜索条件或筛选器'
+                : '开始创建您的第一篇文章吧'}
             </p>
+            {!searchTerm && !statusFilter && !categoryFilter && !tagFilter && (
+              <Link
+                to="/admin/blog/new"
+                className="inline-flex items-center gap-2 mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                新建文章
+              </Link>
+            )}
           </div>
         )}
       </div>
 
       {/* Pagination */}
-      {filteredPosts.length > 0 && (
+      {pagination && totalCount > 0 && (
         <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700 dark:text-gray-300">
-              显示 <span className="font-medium">1</span> 到 <span className="font-medium">{filteredPosts.length}</span> 条，
-              共 <span className="font-medium">{filteredPosts.length}</span> 条记录
+              显示 <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> 到{' '}
+              <span className="font-medium">
+                {Math.min(pagination.page * pagination.limit, totalCount)}
+              </span>{' '}
+              条，共 <span className="font-medium">{totalCount}</span> 条记录
             </div>
             <div className="flex items-center gap-2">
-              <button className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <button
+                onClick={() => updateParams({ page: pagination.page - 1 })}
+                disabled={pagination.page <= 1}
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 上一页
               </button>
-              <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg">
-                1
-              </button>
-              <button className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              
+              {/* 页码按钮 */}
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                const pageNum = Math.max(1, pagination.page - 2) + i;
+                if (pageNum > pagination.totalPages) return null;
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => updateParams({ page: pageNum })}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      pageNum === pagination.page
+                        ? 'bg-blue-600 text-white'
+                        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              <button
+                onClick={() => updateParams({ page: pagination.page + 1 })}
+                disabled={pagination.page >= pagination.totalPages}
+                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 下一页
               </button>
             </div>
